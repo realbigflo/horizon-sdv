@@ -1,0 +1,83 @@
+// Copyright (c) 2024-2025 Accenture, All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//         http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+// Description:
+// Job for workload tooling developers to allow them delete any offline
+// test benches left in MTK Connect during dev/testing.
+pipeline {
+
+  agent {
+    kubernetes {
+      yaml """\
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          annotations:
+            cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
+        spec:
+          serviceAccountName: ${JENKINS_SERVICE_ACCOUNT}
+          containers:
+          - name: builder
+            image: ${CLOUD_REGION}-docker.pkg.dev/${CLOUD_PROJECT}/${ANDROID_BUILD_DOCKER_ARTIFACT_PATH_NAME}:latest
+            imagePullPolicy: IfNotPresent
+            command:
+            - sleep
+            args:
+            - 1h
+      """.stripIndent()
+    }
+  }
+  parameters {
+    string(name: 'MTK_CONNECT_TESTBENCH',
+           defaultValue: '',
+           description: '''<p>Provide the name of the individual testbench to remove from MTK Connect, e.g. <br/>
+           <ul>
+             <li>Android/Tests/CTS_Execution-1</li>
+             <li>Android/Tests/CVD_Launcher-1</il>
+           </ul><b>WARNING:</b> Take care when using this option!</p>''')
+
+  }
+
+  // Block concurrent builds to avoid clashing.
+  options {
+    buildBlocker (useBuildBlocker: true, blockLevel: 'GLOBAL', scanQueueFor: 'BUILDABLE', blockingJobs: '.*MTK.*Cleanup.*')
+  }
+
+  stages {
+    stage ('Delete Offline Testbenches') {
+      when {
+        allOf {
+          expression { env.MTK_CONNECT_TESTBENCH }
+          expression { env.MTK_CONNECT_TESTBENCH =~ /(CVD_Launcher|CTS_Execution)/ }
+        }
+      }
+      steps {
+        container(name: 'builder') {
+          withCredentials([usernamePassword(credentialsId: 'jenkins-mtk-connect-apikey', passwordVariable: 'MTK_CONNECT_PASSWORD', usernameVariable: 'MTK_CONNECT_USERNAME')]) {
+            sh '''
+              sudo \
+              MTK_CONNECT_DOMAIN=${HORIZON_DOMAIN} \
+              MTK_CONNECT_USERNAME=${MTK_CONNECT_USERNAME} \
+              MTK_CONNECT_PASSWORD=${MTK_CONNECT_PASSWORD} \
+              MTK_CONNECT_NATIVE_LINUX_INSTALL=false \
+              MTK_CONNECT_TESTBENCH=${MTK_CONNECT_TESTBENCH} \
+              MTK_CONNECT_DELETE_OFFLINE_TESTBENCHES=true \
+              timeout 15m ./workloads/android/pipelines/tests/cvd_launcher/cvd_mtk_connect.sh --delete
+            '''
+          }
+        }
+      }
+    }
+  }
+}
