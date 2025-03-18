@@ -1,0 +1,81 @@
+// Copyright (c) 2024-2025 Accenture, All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//         http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// Description:
+// Clean up any orphaned GCE instances that are left running because of GCE
+// plugin issues losing connection with agent, and then a potentially
+// expensive instance is left running.
+//
+// The job is useful for workload tooling developers to allow them delete
+// any such instances left when developing tests.
+pipeline {
+
+  agent {
+    kubernetes {
+      yaml """\
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          annotations:
+            cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
+        spec:
+          serviceAccountName: ${JENKINS_SERVICE_ACCOUNT}
+          containers:
+          - name: builder
+            image: ${CLOUD_REGION}-docker.pkg.dev/${CLOUD_PROJECT}/${ANDROID_BUILD_DOCKER_ARTIFACT_PATH_NAME}:latest
+            imagePullPolicy: IfNotPresent
+            command:
+            - sleep
+            args:
+            - 1h
+      """.stripIndent()
+    }
+  }
+
+  options {
+    buildBlocker (useBuildBlocker: true, blockLevel: 'GLOBAL', scanQueueFor: 'ALL', blockingJobs: '.*CF.*Cleanup.*')
+  }
+
+  parameters {
+    string(name: 'VM_INSTANCE_NAME',
+           defaultValue: '',
+           description: '''<p>The name of the instance to delete, e.g.</p>
+           <i>cuttlefish-vm-main-hgie4b</i></p>''')
+  }
+
+  stages {
+    stage ('Delete VM instance') {
+      when {
+        allOf {
+          expression { env.VM_INSTANCE_NAME }
+          expression { env.VM_INSTANCE_NAME =~ /(cuttlefish-vm)/ }
+        }
+      }
+      steps {
+        container(name: 'builder') {
+          sh '''
+            if echo "${VM_INSTANCE_NAME}" | grep -q "^cuttlefish-vm"; then
+              echo "Stopping and deleting ${VM_INSTANCE_NAME}"
+              gcloud compute instances stop "${VM_INSTANCE_NAME}" --zone="${CLOUD_ZONE}" || true
+              yes Y | gcloud compute instances delete "${VM_INSTANCE_NAME}" --zone=${CLOUD_ZONE} || true
+            else
+              echo "Not a cuttlefish-vm instance name: ${VM_INSTANCE_NAME}"
+              exit 1
+            fi
+          '''
+        }
+      }
+    }
+  }
+}

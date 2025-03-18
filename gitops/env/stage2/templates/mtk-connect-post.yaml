@@ -1,0 +1,114 @@
+# Copyright (c) 2024-2025 Accenture, All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#         http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: mtk-connect-writer-sa
+  namespace: mtk-connect
+  annotations:
+    argocd.argoproj.io/sync-wave: "4"
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: mtk-connect-writer-role
+  namespace: mtk-connect
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get", "list", "watch", "create", "update", "delete", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: mtk-connect-writer-rolebinding
+  namespace: mtk-connect
+  annotations:
+    argocd.argoproj.io/sync-wave: "4"
+subjects:
+  - kind: ServiceAccount
+    name: mtk-connect-writer-sa
+roleRef:
+  kind: Role
+  name: mtk-connect-writer-role
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: mtk-connect-cluster-writer
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+  - kind: ServiceAccount
+    name: mtk-connect-writer-sa
+    namespace: mtk-connect
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: mtk-connect-post-job
+  namespace: mtk-connect
+  annotations:
+    argocd.argoproj.io/sync-wave: "7"
+    argocd.argoproj.io/hook: Sync
+spec:
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 120
+  template:
+    spec:
+      serviceAccountName: mtk-connect-writer-sa
+      containers:
+        - name: mtk-connect-post-container
+          image: {{ .Values.config.postjobs.mtkconnect }}
+          imagePullPolicy: Always
+      restartPolicy: Never
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: mtk-connect-api-key-config
+  namespace: mtk-connect
+  annotations:
+    argocd.argoproj.io/sync-wave: "8"
+spec:
+  schedule: "0 0 * * *"
+  startingDeadlineSeconds: 300
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: mtk-connect-writer-sa
+          containers:
+            - name: mtk-connect-api-key-config
+              args: ["--api-domain", "{{ .Values.config.domain }}"]
+              env:
+              - name: MTK_KEY_UPD_USERNAME
+                valueFrom:
+                  secretKeyRef:
+                    name: mtk-connect-apikey
+                    key: username
+              - name: MTK_KEY_UPD_PASSWORD
+                valueFrom:
+                  secretKeyRef:
+                    name: mtk-connect-apikey
+                    key: password
+              image: {{ .Values.config.postjobs.mtkconnectkey }}
+              imagePullPolicy: Always
+          restartPolicy: Never

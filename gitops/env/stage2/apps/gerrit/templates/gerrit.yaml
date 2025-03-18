@@ -1,0 +1,130 @@
+# Copyright (c) 2024-2025 Accenture, All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#         http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+apiVersion: "gerritoperator.google.com/v1beta15"
+kind: GerritCluster
+metadata:
+  name: gerrit
+  namespace: gerrit
+  annotations:
+    argocd.argoproj.io/sync-wave: "4"
+spec:
+  containerImages:
+    gerritImages:
+      tag: v0.1-764-g2f33a537b8-3.11.1-489-g177cc22f91
+  eventsBroker:
+    brokerType: NONE
+  storage:
+    storageClasses:
+      readWriteOnce: standard-rwo
+      readWriteMany: gerrit-rwx
+    sharedStorage:
+      externalPVC:
+        enabled: true
+        claimName: "gerrit-shared-git"
+  refdb:
+    database: ZOOKEEPER
+    zookeeper:
+      connectString: zookeeper.zookeeper.svc.cluster.local:2181
+  ingress:
+    enabled: false
+    pathPrefix: /gerrit
+  serverId: "gerrit-0"
+  fluentBitSidecar:
+    enabled: false
+  gerrits:
+    - metadata:
+        name: gerrit
+        labels:
+          app: gerrit
+      spec:
+        serviceAccount: gerrit
+        replicas: 1
+        resources:
+          requests:
+            cpu: 2
+            memory: 5Gi
+          limits:
+            cpu: 2
+            memory: 6Gi
+        startupProbe:
+          initialDelaySeconds: 120
+          periodSeconds: 10
+          timeoutSeconds: 1
+          successThreshold: 1
+          failureThreshold: 3
+        readinessProbe:
+          initialDelaySeconds: 120
+          periodSeconds: 10
+          timeoutSeconds: 1
+          successThreshold: 1
+          failureThreshold: 3
+        livenessProbe:
+          initialDelaySeconds: 120
+          periodSeconds: 10
+          timeoutSeconds: 1
+          successThreshold: 1
+          failureThreshold: 3
+        service:
+          type: ClusterIP
+          httpPort: 8080
+          sshPort: 29418
+        mode: PRIMARY
+        site:
+          size: 5Gi
+        plugins:
+          - name: download-commands
+          - name: delete-project
+          - name: gitiles
+          - name: gerrit-oauth-provider
+            url: https://github.com/davido/gerrit-oauth-provider/releases/download/v3.5.1/gerrit-oauth-provider.jar
+            sha1: 8e3903ec02900fdec20208242959724cc10f240c
+        configFiles:
+          gerrit.config: |-
+            [gerrit]
+              canonicalWebUrl = https://{{ .Values.config.domain }}/gerrit/
+            [core]
+              packedGitLimit = 1g
+              packedGitWindowSize = 8k
+              packedGitOpenFiles = 1024
+              streamFileThreshold = 1g
+            [index]
+              type = LUCENE
+            [auth]
+              type = OAUTH
+              gitBasicAuthPolicy = HTTP
+              gitOAuthProvider = gerrit-oauth-provider:keycloak-oauth
+              trustedOpenID=^.*$
+            [httpd]
+              listenUrl = proxy-https://*:8080/gerrit/
+              requestLog = true
+              maxThreads = 25
+            [user]
+              name = Gerrit Code Review
+              email = gerrit@example.com
+              anonymousCoward = Unnamed User
+            [container]
+              heapLimit = 4g
+            [plugin "gerrit-oauth-provider-keycloak-oauth"]
+              root-url = https://{{ .Values.config.domain }}
+              realm = "horizon"
+              client-id = "gerrit"
+            [pack]
+              threads = 1
+              windowMemory = 1g
+            [receive]
+              timeout = 15m
+            [transfer]
+              timeout = 3600
+        secretRef: gerrit-secure-config
