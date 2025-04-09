@@ -16,7 +16,7 @@ hardware-centric focus that hinders rapid development and innovation.
 
 ## Streams
 The Horizon initiative consists of two streams: 
-* Stream 1 is the current focus and covers Android Platform development (AAOS IVI, AAOS SDV, AOSP). 
+* Stream 1 is the current focus and covers Android Platform development (AAOS IVI, AOSP). 
 * Stream 2 will focus on expanding beyond Android towards the rest of SDV, enabling cloud-based virtual development of complex system-of-systems.
 
 ## Platform overview
