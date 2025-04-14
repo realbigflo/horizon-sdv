@@ -58,34 +58,8 @@ declare -r mtkc_config_path="/opt/mtk-connect-agent/config"
 # Adjust devices based on true number of active devices.
 function mtkc_max_devices() {
     # If devices less than num_instances aka shards, then reduce.
-    num_instances=$(adb devices | grep -c -E '0.+device$')
-    num_devices="${MTK_CONNECTED_DEVICES}"
-    if (( num_devices != num_instances )); then
-        echo "MTK_CONNECTED_DEVICES (${MTK_CONNECTED_DEVICES}) != num_instances (${num_instances})"
-        if (( num_instances == 0 )); then
-            # Restart adb (adb devices can be unreliable)
-            echo "Restart adb server, sleep 40s"
-            adb kill-server || true
-            sleep 20
-            adb start-server || true
-            sleep 20
-            num_instances=$(adb devices | grep -c -E '0.+device$')
-
-            if (( num_instances == 0 )); then
-                echo "ERROR MTK_CONNECTED_DEVICES (${MTK_CONNECTED_DEVICES}), num_instances (${num_instances})"
-                exit 1
-            fi
-        elif (( num_instances > num_devices )); then
-            num_instances="${MTK_CONNECTED_DEVICES}"
-        fi
-
-        echo "Setting MTK_CONNECTED_DEVICES to ${num_instances}"
-        num_devices=$num_instances
-
-    else
-        echo "MTK_CONNECTED_DEVICES (${MTK_CONNECTED_DEVICES}) = num_instances (${num_instances})"
-    fi
-    MTK_CONNECTED_DEVICES="${num_devices}"
+    MTK_CONNECTED_DEVICES=$(adb devices | grep -c -E '0.+device$')
+    echo "MTK_CONNECTED_DEVICES = ${MTK_CONNECTED_DEVICES}"
 }
 
 # Start MTK Connect agent and create testbench.

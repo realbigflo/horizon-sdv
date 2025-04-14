@@ -39,6 +39,7 @@
 #        repo sync.
 #
 # For Gerrit review change sets:
+#  - GERRIT_SERVER_URL: URL of Gerrit server.
 #  - GERRIT_PROJECT: the name of the project to download.
 #  - GERRIT_CHANGE_NUMBER: the change number of the changeset to download.
 #  - GERRIT_PATCHSET_NUMBER: the patchset number of the changeset to download.
@@ -75,14 +76,14 @@ AAOS_DEFAULT_REVISION=${AAOS_DEFAULT_REVISION:-android-14.0.0_r30}
 AAOS_REVISION=${AAOS_REVISION:-${AAOS_DEFAULT_REVISION}}
 AAOS_REVISION=$(echo "${AAOS_REVISION}" | xargs)
 
-# RPi Revision: must align with Google branch / tag - all bets are off otherwise!
-AAOS_RPI_REVISION=${AAOS_REVISION:-android-15.0.0_r4}
+# RPi Revision (Vanilla RPi)
+AAOS_RPI_REVISION="android-15.0"
 
 # Gerrit AAOS and RPi manifest URLs.
 AAOS_GERRIT_MANIFEST_URL=$(echo "${AAOS_GERRIT_MANIFEST_URL}" | xargs)
 AAOS_GERRIT_MANIFEST_URL=${AAOS_GERRIT_MANIFEST_URL:-https://android.googlesource.com/platform/manifest}
 AAOS_GERRIT_RPI_MANIFEST_URL=$(echo "${AAOS_GERRIT_RPI_MANIFEST_URL}" | xargs)
-AAOS_GERRIT_RPI_MANIFEST_URL=${AAOS_GERRIT_RPI_MANIFEST_URL:-https://raw.githubusercontent.com/raspberry-vanilla/android_local_manifest/}
+AAOS_GERRIT_RPI_MANIFEST_URL=${AAOS_GERRIT_RPI_MANIFEST_URL:-https://raw.githubusercontent.com/raspberry-vanilla/android_local_manifest}
 
 # Google Repo Sync parallel jobs value
 REPO_SYNC_JOBS=${REPO_SYNC_JOBS:-2}
@@ -235,7 +236,6 @@ declare -a AAOS_ARTIFACT_LIST=(
 declare -a POST_STORAGE_COMMANDS=(
     "rm -f ${BUILD_INFO_FILE}"
 )
-# Post repo sync commands
 
 # This is a dictionary mapping the target names to the command line
 # to build the image.
@@ -270,23 +270,39 @@ case "${AAOS_LUNCH_TARGET}" in
         ;;
     aosp_cf*)
         AAOS_MAKE_CMDLINE="m dist"
+
+        WIFI_APK_NAME="WifiUtil.apk"
+
+        # Fallback Wifi APK
+        WIFI_APK_FALLBACK_CMD="git clone https://android.googlesource.com/platform/tools/tradefederation --depth=1 -b android-14.0.0_r30 horizon_wifi && cp -f horizon_wifi/res/apks/wifiutil/${WIFI_APK_NAME} . ; rm -rf horizon_wifi"
+        # Trade Federation Wifi APK from repo.
+        WIFI_APK_PATH_NAME="tools/tradefederation/core/res/apks/wifiutil/${WIFI_APK_NAME}"
+
         AAOS_ARTIFACT_LIST+=(
             "${OUT_DIR}/dist/cvd-host_package.tar.gz"
             "${OUT_DIR}/dist/sbom/sbom.spdx.json"
             "${OUT_DIR}/dist/aosp_cf_${AAOS_ARCH}_auto-img*.zip"
+            "${WIFI_APK_NAME}"
         )
+        POST_BUILD_COMMANDS=(
+            "[ -f ${WIFI_APK_PATH_NAME} ] && cp -f ${WIFI_APK_PATH_NAME} . || ${WIFI_APK_FALLBACK_CMD}"
+        )
+
         # If the AAOS_BUILD_CTS variable is set, build only the cts image.
         if [[ "$AAOS_BUILD_CTS" -eq 1 ]]; then
             AAOS_MAKE_CMDLINE="m cts -j16"
             AAOS_ARTIFACT_LIST+=("${OUT_DIR}/host/linux-x86/cts/android-cts.zip")
         fi
+        POST_STORAGE_COMMANDS+=(
+            "rm -f ${WIFI_APK_NAME}"
+        )
         ;;
     *tangorpro_car*)
         AAOS_ARTIFACT_LIST+=(
             "${OUT_DIR}.tgz"
         )
         AAOS_MAKE_CMDLINE="m && m android.hardware.automotive.vehicle@2.0-default-service android.hardware.automotive.audiocontrol-service.example"
-        # Pixel Tablet binaries for Android ap1a/ap2a/ap3a
+        # Pixel Tablet binaries for Android ap1a/ap2a/ap3a/ap4a/bp1a
         case "${AAOS_LUNCH_TARGET}" in
             *ap2a*)
                 POST_REPO_SYNC_COMMANDS_LIST=(
@@ -297,6 +313,18 @@ case "${AAOS_LUNCH_TARGET}" in
             *ap3a*)
                 POST_REPO_SYNC_COMMANDS_LIST=(
                     "curl --output - https://dl.google.com/dl/android/aosp/google_devices-tangorpro-ap3a.241105.007-2bf56572.tgz | tar -xzvf - "
+                    "tail -n +315 extract-google_devices-tangorpro.sh | tar -zxvf -"
+                )
+                ;;
+            *ap4a*)
+                POST_REPO_SYNC_COMMANDS_LIST=(
+                    "curl --output - https://dl.google.com/dl/android/aosp/google_devices-tangorpro-ap4a.250205.002-6474e704.tgz | tar -xzvf - "
+                    "tail -n +315 extract-google_devices-tangorpro.sh | tar -zxvf -"
+                )
+                ;;
+            *bp1a*)
+                POST_REPO_SYNC_COMMANDS_LIST=(
+                    "curl --output - https://dl.google.com/dl/android/aosp/google_devices-tangorpro-bp1a.250305.020.t2-636db283.tgz | tar -xzvf - "
                     "tail -n +315 extract-google_devices-tangorpro.sh | tar -zxvf -"
                 )
                 ;;
@@ -362,6 +390,10 @@ if [ -n "${OVERRIDE_MAKE_COMMAND}" ]; then
 fi
 
 # Gerrit Review environment variables: remove leading and trailing slashes.
+GERRIT_SERVER_URL=$(echo "${GERRIT_SERVER_URL}" | xargs)
+GERRIT_SERVER_URL=${GERRIT_SERVER_URL:-https://dev.horizon-sdv.com/gerrit}
+# Strip any trailing slashes as this can impact on the download URL.
+GERRIT_SERVER_URL=${GERRIT_SERVER_URL%/}
 GERRIT_PROJECT=$(echo "${GERRIT_PROJECT}" | xargs)
 GERRIT_CHANGE_NUMBER=$(echo "${GERRIT_CHANGE_NUMBER}" | xargs)
 GERRIT_PATCHSET_NUMBER=$(echo "${GERRIT_PATCHSET_NUMBER}" | xargs)

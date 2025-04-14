@@ -291,7 +291,7 @@ function create_vm_instance() {
 }
 
 # Install host tools on the base VM instance.
-# Host will reboot when installed (see cf_host_initialise.sh)
+# Host must be rebooted when installed (use stop/start to achieve it)
 function install_host_tools() {
     echo_formatted "3. Populate Cuttlefish Host tools/packages on VM instance"
 
@@ -318,8 +318,20 @@ function install_host_tools() {
         --command='rm -rf cf' >/dev/null &
     progress_spinner "$!"
 
-    echo -e "${ORANGE}Sleep for 5 minutes while instance reboots${NC}"
-    sleep 300
+
+    # Alternative to reboot instance. Must be rebooted/restarted to ensure
+    # user/groups are applied correctly before image is created from the
+    # instance.
+    echo -e "${ORANGE}Rebooting VM instance ${vm_base_instance}${NC}"
+    gcloud compute instances stop "${vm_base_instance}" --discard-local-ssd=false \
+        --zone="${ZONE}" >/dev/null 2>&1 &
+    progress_spinner "$!"
+
+    gcloud compute instances start "${vm_base_instance}" --zone="${ZONE}" >/dev/null 2>&1 &
+    progress_spinner "$!"
+
+    echo -e "${ORANGE}Sleep for 2 minutes while instance reboot completes.${NC}"
+    sleep 120
     echo -e "${ORANGE}VM instance ${vm_base_instance} rebooted!${NC}"
 }
 

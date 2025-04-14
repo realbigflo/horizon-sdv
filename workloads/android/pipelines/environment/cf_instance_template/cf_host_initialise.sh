@@ -166,10 +166,6 @@ function cuttlefish_install() {
         else
             cuttlefish_install_cts
         fi
-
-        # Reboot to install any additional kernel modules and apply udev rules.
-        echo "Force reboot on change."
-        sudo reboot
     fi
 }
 

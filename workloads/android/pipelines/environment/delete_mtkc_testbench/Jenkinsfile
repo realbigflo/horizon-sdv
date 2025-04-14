@@ -17,6 +17,8 @@
 // test benches left in MTK Connect during dev/testing.
 pipeline {
 
+  // Parameters defined in gitops/env/stage2/templates/jenkins.yaml (Jenkins CasC)
+
   agent {
     kubernetes {
       yaml """\
@@ -37,16 +39,6 @@ pipeline {
             - 1h
       """.stripIndent()
     }
-  }
-  parameters {
-    string(name: 'MTK_CONNECT_TESTBENCH',
-           defaultValue: '',
-           description: '''<p>Provide the name of the individual testbench to remove from MTK Connect, e.g. <br/>
-           <ul>
-             <li>Android/Tests/CTS_Execution-1</li>
-             <li>Android/Tests/CVD_Launcher-1</il>
-           </ul><b>WARNING:</b> Take care when using this option!</p>''')
-
   }
 
   // Block concurrent builds to avoid clashing.

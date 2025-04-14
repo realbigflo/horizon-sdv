@@ -19,6 +19,9 @@
 // References:
 //   * https://github.com/GoogleContainerTools/kaniko
 pipeline {
+
+  // Parameters defined in gitops/env/stage2/templates/jenkins.yaml (Jenkins CasC)
+
   agent {
     kubernetes {
       yaml """\
@@ -43,11 +46,6 @@ pipeline {
     buildBlocker (useBuildBlocker: true, blockLevel: 'GLOBAL', scanQueueFor: 'BUILDABLE', blockingJobs: '.*Docker.*')
   }
 
-  parameters {
-    string(name: 'IMAGE_TAG', defaultValue: 'latest', description: '<p>Image tag for the builder image.</p>')
-    booleanParam(name: 'NO_PUSH', defaultValue: true, description: '<p>Build only, do not push to registry.</p>')
-  }
-
   environment {
     // Update latest tag.
     DESTINATION="--destination=${env.CLOUD_REGION}-docker.pkg.dev/${env.CLOUD_PROJECT}/${env.ANDROID_BUILD_DOCKER_ARTIFACT_PATH_NAME}"
@@ -60,7 +58,7 @@ pipeline {
       steps {
         container(name: 'kaniko') {
           script {
-            currentBuild.description = "$BUILD_USER"
+            currentBuild.description = "NO_PUSH=${env.NO_PUSH}" + "<br>" + "$BUILD_USER"
           }
           sh '''
             # Build the docker image and push to Artifact registry using service account configured with

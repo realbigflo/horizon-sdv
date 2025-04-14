@@ -42,7 +42,7 @@ resource "google_container_cluster" "sdv_cluster" {
 
   ip_allocation_policy {
     stack_type                    = "IPV4"
-    cluster_secondary_range_name  = "pod-ranges"
+    cluster_secondary_range_name  = "pods-range"
     services_secondary_range_name = "services-range"
   }
 

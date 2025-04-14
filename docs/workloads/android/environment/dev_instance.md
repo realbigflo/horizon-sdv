@@ -29,6 +29,8 @@ One-time setup requirements.
 
 ## Environment Variables/Parameters <a name="environment-variables"></a>
 
+**Jenkins Parameters:** Defined in the respective pipeline jobs within `gitops/env/stage2/templates/jenkins.yaml` (CasC).
+
 ### `INSTANCE_MAX_UPTIME`
 
 This is the maximum time that the instance may be running before it is automatically terminated and deleted. This is important to avoid leaving expensive instances in running state.

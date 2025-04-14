@@ -21,6 +21,8 @@ This depends only on [`kaniko`](https://github.com/GoogleContainerTools/kaniko) 
 
 ## Environment Variables/Parameters <a name="environment-variables"></a>
 
+**Jenkins Parameters:** Defined in the respective pipeline jobs within `gitops/env/stage2/templates/jenkins.yaml` (CasC).
+
 ### `IMAGE_TAG`
 
 This is the tag that will be applied when the container image is pushed to the registry. For the current release we

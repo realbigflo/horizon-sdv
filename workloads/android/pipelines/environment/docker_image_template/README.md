@@ -1,0 +1,1 @@
+../../../../../docs/workloads/android/environment/docker_image_template.md

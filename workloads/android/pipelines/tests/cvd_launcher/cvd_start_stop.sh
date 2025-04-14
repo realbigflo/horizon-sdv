@@ -36,6 +36,8 @@ declare BOOTED_INSTANCES=0
 
 # CVD log file.
 declare -r logfile="${WORKSPACE}"/cvd-"${BUILD_NUMBER}".log
+# WiFi device status
+declare -r wifilogfile="${WORKSPACE}"/wifi_connection_status.log
 
 # Download CVD host package and Cuttlefish AVD artifacts
 function cuttlefish_extract_artifacts() {
@@ -46,10 +48,14 @@ function cuttlefish_extract_artifacts() {
         gs://*)
             gsutil cp "${CUTTLEFISH_DOWNLOAD_URL}"/cvd-host_package.tar.gz .
             gsutil cp "${CUTTLEFISH_DOWNLOAD_URL}"/aosp_cf_"${ARCHITECTURE}"_auto-img*.zip .
+            # Allow this to fail.
+            gsutil cp "${CUTTLEFISH_DOWNLOAD_URL}/${WIFI_APK_NAME}" . >/dev/null 2>&1 || true
             ;;
         *)
             wget -nv "${CUTTLEFISH_DOWNLOAD_URL}"/cvd-host_package.tar.gz .
             wget -r -nd -nv --no-parent -A "aosp_cf_${ARCHITECTURE}_auto-img*.zip" "${CUTTLEFISH_DOWNLOAD_URL}"/
+            # Allow this to fail.
+            wget -nv "${CUTTLEFISH_DOWNLOAD_URL}/${WIFI_APK_NAME}" . > /dev/null 2>&1 || true
             ;;
     esac
 
@@ -93,6 +99,46 @@ function cuttlefish_start() {
       --memory_mb "${VM_MEMORY_MB}" > "${logfile}" 2>&1 &
 }
 
+# Install WiFi
+function cuttlefish_install_wifi() {
+    cd "${HOME}"/cf || exit
+
+    if [ -f "${WIFI_APK_NAME}" ]; then
+
+        echo "WiFi Device Summary:" | tee "${wifilogfile}"
+
+        # shellcheck disable=SC2207
+        DEVICES=($(adb devices | grep -E '0.+device$' | cut -f1))
+        for device in "${DEVICES[@]}"; do
+            echo "Installing ${WIFI_APK_NAME} on ${device}"
+            adb -s "${device}" install -g -r "${WIFI_APK_NAME}"
+
+            echo "Enabling WiFi service on ${device}"
+            adb -s "${device}" shell su root svc wifi enable
+
+            echo "Connecting WiFi to Network on ${device}"
+            adb -s "${device}" shell am instrument -e method "connectToNetwork" -e scan_ssid "false" -e ssid "VirtWifi" -w com.android.tradefed.utils.wifi/.WifiUtil | tee connection_result.log
+            if ! grep -E -q "INSTRUMENTATION_RESULT.*result=true" connection_result.log
+            then
+                echo "${device}: Failed to connect to wifi" | tee -a "${wifilogfile}"
+                connection_result=$(grep "INSTRUMENTATION_RESULT:" connection_result.log)
+                if [ -n "${connection_result}" ]; then
+                    echo "    ${connection_result}" | tee -a "${wifilogfile}"
+                fi
+            else
+                echo "${device}: Successfully connected to wifi" | tee -a "${wifilogfile}"
+            fi
+
+            echo "WiFi status on ${device}"
+            echo "================================================="
+            adb -s "${device}" shell su root dumpsys wifi | grep "current SSID"
+            echo "================================================="
+        done
+    else
+        echo "Unable to find ${WIFI_APK_NAME}"
+    fi
+}
+
 # Wait for device to boot (VIRTUAL_DEVICE_BOOT_COMPLETED) or timeout.
 function cuttlefish_wait_for_device_booted() {
     local -r timeout="${SECONDS}"+"${CUTTLEFISH_MAX_BOOT_TIME}"
@@ -118,12 +164,12 @@ function cuttlefish_adb_restart() {
         echo "    Recheck post adb server restart ..."
     fi
     # Allow system time to settle.
-    echo "    Sleep 90 seconds"
+    echo "    Sleep 30 seconds"
     # Ensure adb devices show devices.
     sudo adb kill-server || true
-    sleep 30
+    sleep 10
     sudo adb start-server || true
-    sleep 60
+    sleep 20
     BOOTED_INSTANCES=$(adb devices | grep -c -E '0.+device$')
     echo "    Booted ${BOOTED_INSTANCES} instances of ${NUM_INSTANCES} post adb restart."
 }
@@ -171,24 +217,31 @@ case "${1}" in
         # This works around CVD issues.
         # CVD can fail to boot any devices, so we retry start.
         # Refer to Google for the reasons why!
-        NUM_RETRIES=3
-        for (( i = 1; i <= NUM_RETRIES; i++ )); do
+        NUM_RETRIES=4
+        for (( i = 1; i <= NUM_RETRIES; ++i )); do
+            echo "Attempt ${i} of ${NUM_RETRIES} ..."
             cuttlefish_start
             cuttlefish_wait_for_device_booted
             cuttlefish_adb_restart
-            if (( BOOTED_INSTANCES > 0 )); then
+            if (( BOOTED_INSTANCES == NUM_INSTANCES )); then
                 break;
-            else
-                echo "Retry ${i} of ${NUM_RETRIES} ..."
             fi
         done
+
         if (( BOOTED_INSTANCES == 0 )); then
-            echo "Error: adb reboot failed, devices not booted."
+            echo "Error: android guest instances/devices not booted."
             # Stop and clean up
             cuttlefish_archive_logs
             cuttlefish_stop
             cuttlefish_cleanup
             exit 1
+        elif (( BOOTED_INSTANCES != NUM_INSTANCES )); then
+            echo "ERROR: Only booted ${BOOTED_INSTANCES} of requested ${NUM_INSTANCES}!"
+            echo "       Terminating."
+            exit 1
+        fi
+        if [[ "${CUTTLEFISH_INSTALL_WIFI}" == "true" ]]; then
+            cuttlefish_install_wifi
         fi
         ;;
 esac

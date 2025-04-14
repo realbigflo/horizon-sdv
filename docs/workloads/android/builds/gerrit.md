@@ -10,14 +10,14 @@ It supports the following branches:
 -   `android-14.0.0_r30`
 -   `android-14.0.0_r74`
 -   `android-15.0.0_r4`
--   `android-15.0.0_r10`
+-   `android-15.0.0_r20`
 
 The branch is used to derive the full name (build identifier) of the build targets, e.g.
 
 -   `android-14.0.0_r30` -> `sdk_car_x86_64-ap1a-userdebug`
 -   `android-14.0.0_r74` -> `sdk_car_x86_64-ap2a-userdebug`
 -   `android-15.0.0_r4` -> `sdk_car_x86_64-ap3a-userdebug`
--   `android-15.0.0_r10` -> `sdk_car_x86_64-ap4a-userdebug`
+-   `android-15.0.0_r20` -> `sdk_car_x86_64-bp1a-userdebug`
 
 It builds the following targets:
 
@@ -47,22 +47,20 @@ To successfully run the pipeline, ensure that the referenced Cuttlefish instance
 
 The pipeline is triggered by a Gerrit patchset change based on Gerrit Triggers plugin. It uses the Horizon default path and branch name prefixes:
 - Project prefix path: `android` separates projects into Android workload.
-- Branch prefix: `horizon` and separates branch names from upstream branches.
+- Branch prefix path: `horizon` and separates branch names from upstream branches.
 
-The trigger for the job is configured in the Jenkinsfile as follows:
+The trigger for the job is configured in `gitops/env/stage2/templates/jenkins.yaml` (CasC), e.g.
 
 ```
-  triggers {
-    gerrit customUrl: '', gerritProjects: [[branches: [[compareType: 'ANT', pattern: '**/horizon/*']], compareType: 'REG_EXP', disableStrictForbiddenFileVerification: false, pattern: '^android\\/(?!.*\\/manifest).*$']], serverName: 'Gerrit', triggerOnEvents: [patchsetCreated()]
+triggers {
+  gerrit {
+    events {
+      patchsetCreated()
+    }
+    project('reg_exp:^android\\/(?!.*\\/manifest$).*', ['ant:**/horizon/*'])
   }
+}
 ```
-
-This trigger is created from within Jenkins as follows:
-- Branches matching the pattern `horizon` are triggered for projects with a pattern `android` and not the `manifest` project.
-    -   To create the trigger for use in the Jenkinsfile, you may update that manually or generate using Jenkins Declarative Directive Generator:
-        - `Sample Directive` -> `triggers: Triggers` -> `Add` -> `gerrit: Gerrit Event`
-        - Create the trigger you require and select `Generate Declarative Directive`
-        - Cut and paste the output into the Jenkinsfile.
 
 ## SYSTEM VARIABLES
 
@@ -108,4 +106,4 @@ These are as follows:
 
 ## KNOWN ISSUES <a name="known-issues"></a>
 
-Refer to workloads/android/pipelines/builds/aaos_builder/README.md.
+Refer to `docs/workloads/android/builds/aaos_builder.md` for details.
