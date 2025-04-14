@@ -1,0 +1,1 @@
+../../../../../docs/workloads/android/environment/cf_instance_template.md

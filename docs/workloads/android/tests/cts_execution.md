@@ -6,6 +6,7 @@
 - [Environment Variables/Parameters](#environment-variables)
 - [Example Usage](#examples)
 - [System Variables](#system-variables)
+- [Known Issues](#known-issues)
 
 ## Introduction <a name="introduction"></a>
 
@@ -31,8 +32,11 @@ One-time setup requirements.
 - Before running this pipeline job, ensure that the following templates have been created by running the corresponding jobs:
   - Docker image template: `Android Workflows/Environment/Docker Image Template`
   - Cuttlefish instance template: `Android Workflows/Environment/CF Instance Template`
+    - Must be rebuilt if using `CUTTLEFISH_INSTALL_WIFI` option, to ensure WiFi APK is stored with the image files.
 
 ## Environment Variables/Parameters <a name="environment-variables"></a>
+
+**Jenkins Parameters:** Defined in the respective pipeline jobs within `gitops/env/stage2/templates/jenkins.yaml` (CasC).
 
 ### `JENKINS_GCE_CLOUD_LABEL`
 
@@ -53,6 +57,10 @@ The URL must point to the bucket where the host packages and virtual devices ima
 - `osp_cf_x86_64_auto-img-builder.zip`
 
 URL is of the form `gs://<ANDROID_BUILD_BUCKET_ROOT_NAME>/Android/Builds/AAOS_Builder/<BUILD_NUMBER>` where `ANDROID_BUILD_BUCKET_ROOT_NAME` is a system environment variable defined in Jenkins CasC `jenkins.yaml` and `BUILD_NUMBER` is the Jenkins build number.
+
+### `CUTTLEFISH_INSTALL_WIFI`
+
+This allows the user to install Wifi utility APK on all Cuttlefish virtual devices.
 
 ### `ANDROID_VERSION`
 
@@ -122,7 +130,7 @@ It is only applicable when `MTK_CONNECT_ENABLE` is enabled.
 
 ## Example Usage <a name="examples"></a>
 
-Refer to `workloads/android/pipelines/tests/cvd_launcher/README.md` for an example of how to create and set up a test instance and boot the Cuttlefish Virtual Devices. Once the devices are booted, CTS tests can be run as follows:
+Refer to `docs/workloads/android/tests/cvd_launcher.md` for an example of how to create and set up a test instance and boot the Cuttlefish Virtual Devices. Once the devices are booted, CTS tests can be run as follows:
 
 
 ```
@@ -163,3 +171,7 @@ These are as follows:
 
 -   `JENKINS_SERVICE_ACCOUNT`
     - Service account to use for pipelines. Required to ensure correct roles and permissions for GCP resources.
+
+## KNOWN ISSUES <a name="known-issues"></a>
+
+Refer to `docs/workloads/android/tests/cvd_launcher.md` for details.

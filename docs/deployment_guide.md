@@ -15,38 +15,41 @@ Horizon SDV is designed to simplify the deployment and management of Android wor
    - [Section #2c - Create a GitHub Organization](#section-2c---create-a-github-organization)   
    - [Section #2d - Setting up GCP IAM & Admin for Terraform Workflow](#section-2d---setting-up-gcp-iam--admin-for-terraform-workflow)
    - [Section #2e - Create OAuth2 client and secret](#section-2e---create-oauth2-client-and-secret)
-   - [Section #2f - Create a DNS Zone (Optional)](#section-2f---create-a-dns-zone-optional)
 - [Section #3 - GitHub Foundation Setup](#section-3---github-foundation-setup)
-   - [Section #3a - Setup GitHub Organization and Repository](#section-3a---setup-github-organization-and-repository)
-   - [Section #3b - Create GitHub Application](#section-3b---create-github-application)
-   - [Section #3c - Fork the Repository](#section-3c---fork-the-repository)
+   - [Section #3a - Create GitHub Application](#section-3a---create-github-application)
+   - [Section #3b - Forking the Repository](#section-3b---forking-the-repository)
+   - [Section #3c - Create Repository Branches](#section-3c---create-repository-branches)
    - [Section #3d - Setup GitHub Environment](#section-3d---set-up-github-environment)
-   - [Section #3e - Setup GitHub repository](#section-3e---setup-github-repository)
 - [Section #4 - Trigger GitHub Actions Terraform Workflow](#section-4---trigger-github-actions-terraform-workflow)
 - [Section #5 - Post Terraform Workflow Setup](#section-5---post-terraform-workflow-setup)
-   - [Section #5a - Retrieve Load balancer details](#section-5a---retrieve-load-balancer-details)
-   - [Section #5b - Retrieve Certificate's DNS Authz resources](#section-5b---retrieve-certificates-dns-authz-resources)
+   - [Section #5a - Retrieve Certificate's DNS Authz resources](#section-5a---retrieve-certificates-dns-authz-resources)
+   - [Section #5b - Retrieve Load balancer details](#section-5b---retrieve-load-balancer-details)
    - [Section #5c - Setup Keycloak](#section-5c---setup-keycloak)
 - [Section #6 - Run Cluster Apps](#section-6---run-cluster-apps)
-   - [Section #6a - Argo CD](#section-6a---argo-cd)
-   - [Section #6b - Keycloak](#section-6b---keycloak)
-   - [Section #6c - Gerrit](#section-6c---gerrit)
-   - [Section #6d - Jenkins](#section-6d---jenkins)
-   - [Section #6e - MTK connect](#section-6e---mtk-connect)
+   - [Section #6a - Horizon Landing Page](#section-6a---horizon-landing-page)
+   - [Section #6b - Argo CD](#section-6b---argo-cd)
+   - [Section #6c - Keycloak](#section-6c---keycloak)
+   - [Section #6d - Gerrit](#section-6d---gerrit)
+   - [Section #6e - Jenkins](#section-6e---jenkins)
+   - [Section #6f - MTK connect](#section-6f---mtk-connect)
 - [Section #7 - Deprovisioning Infrastructure](#section-7---deprovisioning-infrastructure)
     - [Section #7a - Install Terraform](#section-7a---install-terraform)
     - [Section #7b - Terraform Destroy](#section-7b---terraform-destroy)
 - [Section #8 - Troubleshooting](#section-8---troubleshooting)
    - [Section #8a - Keycloak sign-in failure](#section-8a---keycloak-sign-in-failure)
+   - [Section #8b - Missing Terraform workflow](#section-8b---missing-terraform-workflow)
+- [Appendix](#appendix)
+   - [Branching strategy](#branching-strategy)
+   - [Create a DNS Zone (Optional)](#create-a-dns-zone-optional)
 - [LICENSE](#license)
 
 ## Technologies   
 Technologies being used to provision the infrastructure along with the required applications for the GKE cluster.
-* Google Cloud Platform - Cloud service provider for infrastructure provisioning.
-* Terraform - IaC tool used to provision the infrastructure to maintain infrastructure consistency.
-* GitHub - Source code management tool where infrastructure configuration, Kubernetes application manifests, workflows etc., are stored.
-* GitHub Actions - Continuous Integration (CI) platform used for automating the deployment process.
-* Argo CD - Declarative, GitOps continuous delivery tool for Kubernetes.
+* Google Cloud Platform - cloud service provider facilitating infrastructure provisioning.
+* Terraform - IaC tool used to provision the infrastructure and maintain infrastructure consistency.
+* GitHub - source code management tool where infrastructure configuration, Kubernetes application manifests, workflows etc., are stored.
+* GitHub Actions - continuous Integration (CI) platform used for automating the deployment process.
+* Argo CD - declarative, GitOps continuous delivery tool for Kubernetes.
 
 ## Project directories and files
 The project is implemented in the following directories:
@@ -67,7 +70,7 @@ It is required to replace them with actual values as you follow the setup instru
 | `HORIZON_DOMAIN`           | Your desired primary domain name.                                      | `your-domain.com`                          |
 | `GCP_PROJECT_ID`           | Your GCP Project ID. ([more](#section-2a---gcp-project-details))       | `my-cloud-project-abc-123`                 |
 | `REPOSITORY_URL`           | The URL of your GitHub repository.                                     | `https://github.com/your-gh-org/your-repo` |
-| `BRANCH_NAME`              | The branch of your repository to use [more](#branching-strategy)       | `feature-xyz` or `main`                    |
+| `BRANCH_NAME`              | The branch of your repository to use ([more](#branching-strategy))       | `feature-xyz` or `main`                    |
 | `GITHUB_ORGANIZATION_NAME` | Your GitHub organization's name. ([more](#section-2c---create-a-github-organization)) | `your-gh-org`               |
 | `GITHUB_REPOSITORY_NAME`   | Your GutHub Repository's name. ([more](#section-3c---fork-the-repository)) | `horizon-sdv`                          |
 | `GITHUB_ENVIRONMENT_NAME`  | GitHub Environment which holds secrets and variables accessible by GitHub Actions Workflow. ([more](#create-a-github-environment)) | `dev` |
@@ -88,7 +91,7 @@ It is required to replace them with actual values as you follow the setup instru
 * Team-member with admin privileges able to update configuration in settings such as Secrets and Variables to customize it to use by the team.
 
 ### Google Cloud Platform
-* Configured GCP account / project.
+* Configured GCP account/project.
 * Google cloud project with the below APIs enabled:   
    Go to APIs & Services, Enabled APIs & services and click on ENABLE APIS AND SERVCIES and enable the below APIs.
    - IAM Service Account Credentials API
@@ -122,7 +125,7 @@ It is required to perform the checks mentioned in this section as this informati
 2. Project ID and Project Number.
    * Click on the Google Cloud logo on the top left of the page which leads to the welcome page.   
       <img src="images/gcp_welcome_page.png" width="400" />
-   * Click on Dashboard where you can find the details mentioned in the Project info Card as below.   
+   * Click on Dashboard where you can find the Project ID and Project Number details mentioned in the Project info Card as below.   
       <img src="images/gcp_dashboard.png" width="400" />
 
 <details>
@@ -133,8 +136,7 @@ Default Compute Service Account
 <pre>
 <code>gcloud iam service-accounts list \
    --filter="email ~ [0-9]+-compute@developer.gserviceaccount.com" \
-   --format="value(email)"
-</code>
+   --format="value(email)"</code>
 </pre>
 </li>
 <li>
@@ -164,7 +166,7 @@ In the current GCP project, it is required to create a GCP Bucket to store data 
 ### Section #2c - Create a GitHub Organization
 GitHub organization should be created as a few organization details are required for configuring the Workload Identity Federation on GCP. Before we get started on creating a GitHub organization, it is required to have a GitHub account. If you do not have a GitHub account already, sign up [here](https://docs.github.com/en/get-started/start-your-journey/creating-an-account-on-github).
 
-1. Log in to GitHub, click on your profile (top-right corner of the page) and select "Your organizations".
+1. Log in to GitHub, click on your profile (profile icon located at top-right corner of the page) and select "Your organizations".
 2. Click on "New Organization" under Organizations.
 3. Click on "Create a free organization".
 4. Enter Organization name of your choice.
@@ -183,7 +185,7 @@ Below are the resources which are required to be configured:
 3. Binding the Service Account to the Workload Identity Federation.   
     
 #### Creating a Workload Identity Federation pool and provider
-1. Under IAM & Admin, select Workload Identity Federation and click on GET STARTED.
+1. Under IAM & Admin, select Workload Identity Federation and click on GET STARTED. (Click on CREATE POOL button if the GET STARTED button is not visible.)
 2. Provide all the necessary details
    - Enter Name as "github" and click on CONTINUE.
    - Select OpenID Connect (OIDC) as the provider within Select a provider.
@@ -200,7 +202,7 @@ Below are the resources which are required to be configured:
       * "attribute.repository" = "assertion.repository"
    - Click on ADD CONDITION under Attribute Conditions.
    - Configure Attribute Conditions as below
-      * Condition CEL = "assertion.repository_owner=='GITHUB_ORGANIZATION_NAME'"
+      * Condition CEL = "assertion.repository_owner=='<GITHUB_ORGANIZATION_NAME>'"
    - Click save.
 3. Workload Identity Federation Pool and Provider has now been created successfully.   
    <img src="images/gcp_workload_identity_pool_1.png" width="750" />
@@ -214,8 +216,7 @@ Create a Workload Identity Pool
 <code>gcloud iam workload-identity-pools create github \
    --location=global \
    --display-name="github" \
-   --description="Workload Identity Pool for GitHub Actions"
-</code>
+   --description="Workload Identity Pool for GitHub Actions"</code>
 </pre>
 </li>
 <li>
@@ -228,8 +229,7 @@ Create a Workload Identity Federation Provider
    --description="GitHub OIDC Provider" \
    --issuer-uri="https://token.actions.githubusercontent.com" \
    --attribute-mapping="google.subject=assertion.sub,attribute.actor=assertion.actor,attribute.aud=assertion.aud,attribute.repository_owner=assertion.repository_owner,attribute.repository=assertion.repository" \
-   --attribute-condition="assertion.repository_owner=='&lt;GITHUB_ORGANIZATION_NAME&gt;'"
-</code>
+   --attribute-condition="assertion.repository_owner=='&lt;GITHUB_ORGANIZATION_NAME&gt;'"</code>
 </pre>
 </li>
 </ol>
@@ -253,8 +253,7 @@ Create a Workload Identity Federation Provider
 Create service account
 <pre>
 <code>gcloud iam service-accounts create github-sa \
-   --display-name="Service Account for GitHub Actions"
-</code>
+   --display-name="Service Account for GitHub Actions"</code>
 </pre>
 </li>
 <li>
@@ -262,8 +261,7 @@ Add <code>Owner</code> role to the service account
 <pre>
 <code>gcloud projects add-iam-policy-binding &lt;GCP_PROJECT_ID&gt; \
    --member="serviceAccount:github-sa@&lt;GCP_PROJECT_ID&gt;.iam.gserviceaccount.com" \
-   --role="roles/owner"
-</code>
+   --role="roles/owner"</code>
 </pre>
 </li>
 <li>
@@ -271,19 +269,18 @@ Add <code>Workload Identity User</code> role to the service account
 <pre>
 <code>gcloud projects add-iam-policy-binding &lt;GCP_PROJECT_ID&gt; \
    --member="serviceAccount:github-sa@&lt;GCP_PROJECT_ID&gt;.iam.gserviceaccount.com" \
-   --role="roles/iam.workloadIdentityUser"
-</code>
+   --role="roles/iam.workloadIdentityUser"</code>
 </pre>
 </li>
 </ol>
 </details>
 
 #### Binding Service Account to the Workload Identity Provider
-1. To bind this Service Account to the Workload Identity Provider, Navigate to the the Workload Identity Pool created earlier.
-2. Click on the name of the Workload Identity pool with Display Name as "github" in the list.
+1. To bind this Service Account to the Workload Identity Provider, Navigate to the Workload Identity Pool created earlier.
+2. Click on the name of the Workload Identity pool with Display Name as "github" from the list.
 2. Click on GRANT ACCESS and select **Grant access using Service Account impersonation**.
 3. Select `github-sa` as the Service Account under Select service account.
-4. Select Attribute name as `repository_owner` and attribute value as `GITHUB_ORGANIZATION_NAME` under Select principals (identities that can access the service account) and click on SAVE.
+4. Select Attribute name as `repository_owner` and attribute value as `<GITHUB_ORGANIZATION_NAME>` under Select principals (identities that can access the service account) and click on SAVE.
 5. In the next window, select Provider as `github-provider` from the drop-down menu and set OIDC ID token path as `https://token.actions.githubusercontent.com`.
 6. Download the config file and and click on DISMISS.
 7. Confirm the Service account has been bound successfully under CONNECTED SERVICE ACCOUNTS tab.   
@@ -315,77 +312,21 @@ Once in APIs & Services, click on OAuth consent screen to start the setup proces
 3. Select Application type as "Web application".
 4. Provide Name as "Horizon".
 5. Under Authorized redirect URIs enter the URI which points google endpoint of Keycloak.   
-   Example: `https://<SUB_DOMAIN>.<HORIZON_DOMAIN>.com/auth/realms/horizon/broker/google/endpoint`.
+   Example: `https://<SUB_DOMAIN>.<HORIZON_DOMAIN>/auth/realms/horizon/broker/google/endpoint`.
 6. Clicking on CREATE opens a pop-up window containing client ID and secret which can be copied and saved locally to a file or download the credential detail as a JSON file. Click on OK for the pop-up window to close.    
    <img src="images/gcp_oauth_client_details.png" width="325" />
 7. The credential will appear Under OAuth 2.0 Client IDs as below and credential details can be viewed and edited by clicking on the Name of the OAuth 2.0 Client ID.   
    <img src="images/gcp_oauth_client_list.png" width="325" />
 
-### Section #2f - Create a DNS Zone (Optional)
-Follow the steps mentioned in this section only if you do not have DNS Zone setup already or you wish to bring your desired Domain name.
-
-#### Prerequisites
-1. Domain name to be managed.
-2. Enable Cloud DNS API.
-
-#### Create a Managed Zone
-1. On the Google Cloud console, search for Network Services and click on Cloud DNS.
-2. Click on CREATE ZONE.
-3. Set the Zone type to be Public.
-4. Enter a Zone name of your choice. (example: `your-domain.com`) and click on CREATE.
-
-#### Retrieve the Google Cloud DNS Name Servers
-1. In Cloud DNS, click on your Zone name which opens the Zone details.
-2. Under RECORD SETS, look for an entry of Type "NS" and click on it to open details.
-3. Copy all four entries under Routing data which is required for the next step.
-
-#### Update Name Servers at your Domain Registrar
-The steps mentioned in this section may vary based on your Domain name registrar.
-
-1. Log in to your Domain Registrar. (e.g., GoDaddy, Namecheap, Google Domains, etc.)
-2. Find DNS Management or Name Server Settings section for your domain.
-3. Replace the current name servers with the four Google Cloud DNS name servers you noted down in step previous step.
-
-#### Add DNS Records to your Managed Zone
-1. In Cloud DNS, click on your Zone name which opens the Zone details.
-2. Under RECORD SETS, click on ADD STANDARD.
-   * 'A' record:
-      1. Enter DNS name, `<SUB_DOMAIN>`  will be added as a prefix to your domain `<HORIZON_DOMAIN>`.
-      2. Set Resource record type to `A`.
-      3. Under IPv4 Address, enter the IP Address of the load balancer.
-      4. You can find the load balancer IP by navigating to Network Services, Load balancing click on the name of the load balancer with Protocol `HTTPS`.
-      5. Copy the IP Address only without the port, under Frontend required by the 'A' record. (point 3)
-      6. After pasting the required IP Address, click on CREATE.
-   * 'CNAME' record:   
-      The details for creating `CNAME` record can be populated after the completion of [Section #5b - Retrieve Certificate's DNS Authz resources](#section-5b---retrieve-certificates-dns-authz-resources).
-      1. Enter the value under `DNS Record Name` for DNS Name.
-      2. Enter the value under `DNS Record Data` for Canonical name.
-      3. Click on CREATE.
-
-DNS changes take anywhere from a few minutes to 24-48 hours to propagate across the internet, depends upon the TTL values and DNS caching.
-
 ## Section #3 - GitHub Foundation Setup
-
-### Section #3a - Setup GitHub Organization and Repository
 In this section, steps for configuring a GitHub organization and repository are mentioned. For creating a GitHub Organization, refer [Section #2c - Create a GitHub Organization](#section-2c---create-a-github-organization)
 
-#### Create a GitHub Repository
-1. Go to the Organization, under Repositories tab click on "New repository".
-2. Make sure the Owner field matches the Organization name. If not, select the correct Owner from the drop-down list.
-3. Enter the name of the repository of your choice.
-4. Select "Public" for the repository visibility.   
-   <img src="images/github_create_repository.png" width="750" />
-5. Click on Create repository.
+### Section #3a - Create GitHub Application
+> [!NOTE]
+> When setting up GitHub Apps for your GitHub organization, there are two distinct sections within your GitHub organization's settings where "GitHub Apps" are listed. This can sometimes cause confusion.
+> - **Organization settings > GitHub Apps** to see which apps are already connected to your organization.
+> - **Organization settings > Developer settings > GitHub Apps** to create and configure new GitHub Apps that your organization will use or offer.
 
-<details>
-<summary><code>gh</code> CLI</summary>
-Create public GitHub repository.
-<pre>
-<code>gh repo create &lt;GITHUB_ORGANIZATION_NAME&gt;/&lt;GITHUB_REPOSITORY_NAME&gt; --public</code>
-</pre>
-</details>
-
-### Section #3b - Create GitHub Application
 1. Go to the GitHub organization settings tab, scroll down and click on Developer settings and select "GitHub Apps".
 2. Click on "New GitHub App".
    * Enter the GitHub App name as "horizon-sa" (If the name has already been taken, provide your desired post-fix for the app name instead of "sa")
@@ -395,48 +336,70 @@ Create public GitHub repository.
       <img src="images/github_app_contents_permission.png" width="750" />
 3. Click on Create GitHub App.
 4. To create a Private Key, 
-   * Go to Organization, Settings, Developer settings, GitHub Apps and click on the "Edit" Button for "horizon-sa".
+   * Go to your GitHub organization, Settings, Developer settings, GitHub Apps and click on the "Edit" Button for "horizon-sa".
    * Scroll down and under Private keys, click on "Generate a private key"   
       <img src="images/github_app_private_key_generation.png" width="425" />
    * Download and Save the `.pem` file to your machine locally.   
-5. To note down the GitHub App ID, navigate to Organization, Settings, Developer settings, GitHub Apps and click on "horizon-sa" and note down the info as shown below   
+5. To note down the GitHub App ID, navigate to your GitHub organization, Settings, Developer settings, GitHub Apps and click on "horizon-sa" and note down the info as shown below   
    <img src="images/github_app_id.png" width="450" />
 6. Installing the GitHub App
-   * Go to Organization, Settings, Developer settings, GitHub Apps and click on "horizon-sa".
+   * Go to your GitHub organization, Settings, Developer settings, GitHub Apps and click on "horizon-sa".
    * Click on Install App.
    * Click on Install, select "All repositories" and click on "Install" again.
-7. To verify the installation, go to Organization settings and click on GitHub Apps and it should look like below.   
+7. To verify the installation, go to your GitHub organization settings and click on GitHub Apps and it should look like below.   
    (GitHub App name may differ in your environment)     
    <img src="images/github_app_confirm_installation.png" width="750" />
 
-### Section #3c - Fork the repository
-Below steps are for forking the repository to your GitHub organization.
+### Section #3b - Forking the Repository
+Follow the below mentioned steps to get the [horizon-sdv](https://github.com/GoogleCloudPlatform/horizon-sdv) GitHub repository to your newly created GitHub organization.
 
-1. On the repository GitHub page, click on fork drop-down list and select "Create a new fork".   
+1. Go to the [horizon-sdv](https://github.com/GoogleCloudPlatform/horizon-sdv) Repository on GitHub.
+2. Click on the Fork drop-down button and select "Create a new fork" as shown below.   
    <img src="images/github_create_fork_1.png" width="425" />
-2. Select your GitHub organization as Owner and click on "Create fork".   
-   <img src="images/github_create_fork_2.png" width="750" />
-3. The repository should now be available on your GitHub Organization.
-
+3. Select your GitHub organization as Owner and click on "Create fork".   
+   <img src="images/github_fork_horizon_repository.png" width="750" />
+4. The repository should now be available on your GitHub Organization.
 <details>
-<summary><code>gh</code> CLI</summary>
-Fork repository to your GitHub organization.
-<pre>
-<code>gh repo fork &lt;SOURCE_GITHUB_ORGANIZATION_NAME&gt;/&lt;SOURCE_GITHUB_REPOSITORY_NAME&gt; --org &lt;GITHUB_ORGANIZATION_NAME&gt;</code>
-</pre>
+<summary><code>gh</code> CLI command</summary>
+
+<pre><code>gh repo fork &lt;SOURCE_GITHUB_ORGANIZATION_NAME&gt;/&lt;SOURCE_GITHUB_REPOSITORY_NAME&gt; --org &lt;GITHUB_ORGANIZATION_NAME&gt;</code></pre>
 </details>
+
+### Section #3c - Create Repository Branches
+Once you fork the [horizon-sdv](https://github.com/GoogleCloudPlatform/horizon-sdv) repository to your GitHub organization (as mentioned in [Section #3b - Forking the Repository](#section-3b---forking-the-repository)), it will only have a `main` branch using which you can create new `feature/<BRANCH_NAME>` and `env/<BRANCH_NAME>` branches for development purposes.   
+
+Refer [Branching strategy](#branching-strategy) for more information.
+
+To trigger the Terraform apply workflow, ensure you create a branch that follows the `env/<BRANCH_NAME>` pattern.
+For example, you might name your new branch `env/dev`.   
+
+#### Steps to create a new branch using GitHub GUI.
+1. Go to the horizon-sdv GitHub Repository in your GitHub organization.
+2. Ensure that the branch drop-down value is set to `main`.
+3. Click on the branch drop down, type the name of the branch as `env/<BRANCH_NAME>` and click Create branch `env/<BRANCH_NAME>` from `main` as below.   
+   <img src="images/github_create_new_branch_ui.png" width="425" />   
+
+#### (Optional) If you wish to create new branches locally,
+- First create a personal access token referring to [Creating a personal access token (classic)](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-personal-access-token-classic).
+- Then refer [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository#cloning-a-repository)
+- [Create new branches](https://www.w3schools.com/git/git_branch.asp).
+- [Pushing commits to a remote repository](https://docs.github.com/en/get-started/using-git/pushing-commits-to-a-remote-repository#about-git-push).
 
 ### Section #3d - Set up GitHub Environment
 In this section we will be setting up the GitHub repository environment with the required environment secrets and variables.
 
 #### Create a GitHub environment
-It is important to name your GitHub environment based on your branching strategy. For each `env/<BRANCH_NAME>`, you must create an environment with name `<BRANCH_NAME>` having its own set of environment secrets and variables.   
+> [!NOTE]
+> The GitHub environment secrets and variable shown in this section are only for demonstration and may vary on your GitHub environment.
+
+It is important to name your GitHub environment based on your branch created in [Create a new branch](#create-a-new-branch) section. For each `env/<BRANCH_NAME>`, you must create an environment with name `<BRANCH_NAME>` having its own set of environment secrets and variables.   
 Refer [Branching strategy](#branching-strategy) for more information.
 
 1. Navigate to the forked repository on your GitHub organization and switch to the Settings tab.
 2. From Settings tab, go to "Environments".   
    <img src="images/github_create_environment.png" width="750" />
 3. Click on "New environment" and name it as "<BRANCH_NAME>" (where "<BRANCH_NAME>" is a part of "env/<BRANCH_NAME>") and click on "Configure environment".
+   - Example: If you have created a new branch with name `env/dev`, your environment name must be `dev`.
 
 <details>
 <summary><code>gh api</code> command</summary>
@@ -450,40 +413,52 @@ Create Github Environment
 > [!IMPORTANT]
 > The credentials below are for demonstration purposes and may be different for your environment.
 > Create a strong password with at least 12 characters in length and containing a combination of,
-> - uppercase letters [A -Z]
-> - lowercase letters [a -z]
-> - numbers [0 - 9]
+> - Uppercase letters [A -Z]
+> - Lowercase letters [a -z]
+> - Numbers [0 - 9]
 > - Symbols [!@#$%^&* etc.]
 >
-> Failing do to so might lead to unstable and unsecure cluster.
+> Failing to do so might break the cluster and lead to unstable and insecure cluster behavior.
 
 1. Clicking on "Add environment secrets" under Environment secrets opens a new "Add secret" window where the secret Name and Value can be provided.   
    <img src="images/github_environment_secret_1.png" width="425" />
 2. After entering the details of the secret, click on "Add secret".   
    <img src="images/github_environment_secret_2.png" width="750" />
 3. Below is the list of all the secrets to be created along with the steps to create them.
-   * GH_APP_ID
-      - Navigate to Organization Settings, Developer settings, GitHub Apps and click on "horizon-sa" and note down the info as shown below   
+   * **GH_APP_ID**
+      - Navigate to Organization Settings, Developer settings, GitHub Apps and click on "edit" button of your GitHub App and enter the App ID as shown below   
       <img src="images/github_app_id.png" width="450" />
-   * GH_APP_KEY
-      - Enter the details of the downloaded `.pem` key file 
-        created in [Section #3b - Create GitHub Application](#section-3b---create-github-application), point number 4.
-   * GH_INSTALLATION_ID
+   * **GH_APP_KEY**
+      - Enter the full content of the downloaded `.pem` key file 
+        created in [Section #3a - Create GitHub Application](#section-3a---create-github-application), point number 4.  
+      - example:
+         > When copying the private key, ensure there is a newline character at the very end. 
+         > Missing this newline can sometimes lead to instability or issues with SSH authentication.   
+
+         ```
+         -----BEGIN RSA PRIVATE KEY-----
+         MIIEowIBAAKCAQEAxSKYEnNJLvauRzYdrG7Nfwad4+AdtsEoB05Ep49vaL5IqCCr
+         ...
+         HTzyl4nUENTZWKjvDKzZW3xD9btOZ7aCCPPOhgb+orXEYWpM3WVm
+         -----END RSA PRIVATE KEY-----
+
+         ```
+   * **GH_INSTALLATION_ID**
       - Navigate to Organization Settings, GitHub Apps and click on "Configure".
       - Once in the GitHub App configuration page, the `GH_INSTALLATION_ID` is present in the URL of the page as below,
          - `https://github.com/organizations/<GH-ORG-NAME>/settings/installations/<INSTALLATION_ID>`
       - Enter the value of `<INSTALLATION_ID>`
-   * GCP_SA
+   * **GCP_SA**
       - On the GCP Console, go to IAM & Admin, Service Accounts, copy the email name `github-sa@<GCP_PROJECT_ID>.iam.gserviceaccount.com`
         from the table.
-   * WIF_PROVIDER
+   * **WIF_PROVIDER**
       - On the GCP Console, go to IAM & Admin, Workload Identity Federation, click on github provider pool.
       - Once the pool details open, from the providers tab on the right of the page, click on edit icon.
       - Scroll up and copy the URL mentioned under "Audiences" and paste only the part starting from `projects/.../github-provider`
          - example: `projects/<GCP_PROJECT_NUMBER>/locations/global/workloadIdentityPools/github/providers/github-provider`
-   * ARGOCD_INITIAL_PASSWORD
+   * **ARGOCD_INITIAL_PASSWORD**
       - You can create your desired strong password.
-   * CUTTLEFISH_VM_SSH_PRIVATE_KEY
+   * **CUTTLEFISH_VM_SSH_PRIVATE_KEY**
       - If you are using a Windows machine, you can generate the key using below commands using [WSL](https://learn.microsoft.com/en-us/windows/wsl/about).
       - Or you can use the [google cloud shell](https://cloud.google.com/shell/docs/launching-cloud-shell#launch_from_the), here it is important to save the keys to your machine locally as the data on the cloud shell machine may not persist.
       - Run the below command to generate the SSH keys. 
@@ -491,8 +466,9 @@ Create Github Environment
         mkdir -p cuttlefish_vm_keys && ssh-keygen -t rsa -b 4096 -f ./cuttlefish_vm_keys/my_cuttlefish_vm_ssh_key && cat ./cuttlefish_vm_keys/my_cuttlefish_vm_ssh_key
         ```
       - example:
-      > When copying the private key, ensure there is a newline character at the very end. 
-      > Missing this newline can sometimes lead to instability or issues with SSH authentication.
+         > When copying the private key, ensure there is a newline character at the very end. 
+         > Missing this newline can sometimes lead to instability or issues with SSH authentication.
+
         ```
         -----BEGIN OPENSSH PRIVATE KEY-----
          b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAACFwAAAAdzc2gtcn
@@ -501,9 +477,9 @@ Create Github Environment
          -----END OPENSSH PRIVATE KEY-----
 
         ```
-   * GERRIT_ADMIN_INITIAL_PASSWORD
+   * **GERRIT_ADMIN_INITIAL_PASSWORD**
       - You can create your desired strong password.
-   * GERRIT_ADMIN_PRIVATE_KEY
+   * **GERRIT_ADMIN_PRIVATE_KEY**
       - If you are using a Windows machine, you can generate the key using below commands using [WSL](https://learn.microsoft.com/en-us/windows/wsl/about).
       - Or you can use the [google cloud shell](https://cloud.google.com/shell/docs/launching-cloud-shell#launch_from_the), here it is important to save the keys to your machine locally as the data on the cloud shell machine may not persist.
       - Run the below command to generate the SSH keys
@@ -511,8 +487,8 @@ Create Github Environment
         mkdir -p gerrit_admin_keys && ssh-keygen -t ecdsa -b 521 -f ./gerrit_admin_keys/my_gerrit_admin_ssh_key && cat ./gerrit_admin_keys/my_gerrit_admin_ssh_key
         ```
       - example:
-      > When copying the private key, ensure there is a newline character at the very end. 
-      > Missing this newline can sometimes lead to instability or issues with SSH authentication.
+         > When copying the private key, ensure there is a newline character at the very end. 
+         > Missing this newline can sometimes lead to instability or issues with SSH authentication.   
 
          ```
          -----BEGIN OPENSSH PRIVATE KEY-----
@@ -522,18 +498,18 @@ Create Github Environment
          -----END OPENSSH PRIVATE KEY-----
 
          ```
-   * JENKINS_INITIAL_PASSWORD
+   * **JENKINS_INITIAL_PASSWORD**
       - You can create your desired strong password.
-   * KEYCLOAK_HORIZON_ADMIN_PASSWORD
+   * **KEYCLOAK_HORIZON_ADMIN_PASSWORD**
       - You can create your desired strong password.
-   * KEYCLOAK_INITIAL_PASSWORD   
+   * **KEYCLOAK_INITIAL_PASSWORD**   
       - You can create your desired strong password.
 4. Once the Environment secrets have been created, it will be visible as shown below   
    <img src="images/github_environment_secrets_list.png" width="750" />
 
 <details>
 <summary><code>gh</code> CLI</summary>
-For each environment secret, run the below commands once the repository has been <a href="#clone-the-repository">cloned</a> locally.
+For each environment secret, run the below commands once the repository has been cloned locally.
 <li>
 Interactive creation <br>
    Follow this method for typical `secret_name` = `secret_value` items.
@@ -556,21 +532,21 @@ Use this method for creating secrets which hold private keys.<br>
 1. Open repository settings and click on Environments, scroll down and click on "Add environment variable".   
    <img src="images/github_environment_variable_1.png" width="425" />
 2. Add environment variables to be created are listed below,
-   * GCP_BACKEND_BUCKET_NAME
+   * **GCP_BACKEND_BUCKET_NAME**
       - Enter the name of the GCS Bucket created in [Create a Bucket in GCP](#section-2b---create-a-bucket-in-gcp)
-   * GCP_CLOUD_REGION
-      - Enter the Cloud region of your choice. (example: `europe-west1`)
-   * GCP_CLOUD_ZONE
-      - Enter the Cloud region of your choice. (example: `europe-west1-d`)
-   * GCP_COMPUTER_SA
+   * **GCP_CLOUD_REGION**
+      - Enter the Cloud region of your choice. (example: `us-central1`)
+   * **GCP_CLOUD_ZONE**
+      - Enter the Cloud region of your choice. (example: `us-central1-a`)
+   * **GCP_COMPUTER_SA**
       - Enter the default compute service account details retrieved from the [Section #2a - GCP Project details](#section-2a---gcp-project-details) point number 1.
-      - example: <GCP_PROJECT_NUMBER>-compute@developer.gserviceaccount.com
-   * GCP_PROJECT_ID
+      - example: `<GCP_PROJECT_NUMBER>-compute@developer.gserviceaccount.com`
+   * **GCP_PROJECT_ID**
       - Enter the GCP project ID details retrieved from the [Section #2a - GCP Project details](#section-2a---gcp-project-details) point number 2.
-   * HORIZON_DOMAIN
+   * **HORIZON_DOMAIN**
       - Enter the domain name of your choice. (example: `your-domain.com`)
 3. Once the Environment variable have been created, it will be visible as shown below   
-   <img src="images/github_environment_variable_list.png" width="400" />
+   <img src="images/github_environment_variable_list.png" width="750" />
 
 <details>
 <summary><code>gh</code> CLI</summary>
@@ -580,134 +556,16 @@ For each environment variable, run the below commands once the repository has be
 </pre>
 </details>
 
-### Section #3e - Setup GitHub repository
-This section covers the steps to be followed for cloning the repository to the local machine and creating required branches.
-
-#### Create GitHub Personal Access Token
-Creating a GitHub Personal Access Token is required for securely accessing the repository.
-
-1. In your profile settings (top-right corner), open Developer Settings.
-2. Clicking on Personal access tokens opens a drop-down, select "Tokens (classic)".
-3. Click on "Generate new token and select Generate new token (classic)".   
-   <img src="images/github_create_personal_access_token.png" width="750" />
-4. Enter a suitable name for the token in the "Note" field and select Expiration of the token based on your requirement. (default set to 30 days)
-5. Under "Select scopes", check all the checkboxes to enable all privileges and click on "Generate token".
-6. Make sure to copy and save the token as it is displayed only once after token is created.
-
-#### GitHub Personal Access Token Single sign-on
-> [!NOTE]
-> This section should should only be followed if your GitHub organization offers SSO (Single sign-on). If not, skip this section.
-
-1. In your profile settings (top-right corner), open Developer Settings.
-2. Clicking on Personal access tokens opens a drop-down, select "Tokens (classic)".
-3. If available, click on configure SSO, which opens a drop-down window and find an organization name between organizations that are "Available to authorize".   
-   <img src="images/github_personal_access_token_sso.png" width="425" />
-4. Click "Authorize" that corresponds to the GitHub organization name you are working in as shown in the above example.
-
-#### Clone the repository
-Before running the below commands, make sure [git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git) is installed and configured on your local machine.
-
-1. On the repository homepage, click on <img src="images/github_clone_1.png" width="60" /> button and copy the HTTPS URL.   
-   <img src="images/github_https_clone.png" width="425" />
-2. On your machine, navigate to your desired path and open the terminal and run the below command   
-   ```
-   git clone <REPOSITORY_URL>
-   ```
-
-#### Branching strategy
-Once you clone the repository to your machine, it may contain a single `main` branch from which you can create new `feature/` and `env/` branches for development purposes.   
-
-* `main`
-* `env/<BRANCH_NAME>`
-* `feature/<BRANCH_NAME>`
-
-From the above list of branches, the `env/<BRANCH_NAME>` can be associated to a project on GCP and have its own environment secrets and variables configured in the GitHub repository.   
-
-For development, you may create new `feature/<BRANCH_NAME>` which can be merged into `env/<BRANCH_NAME>` after code review and passing all tests. 
-You can create multiple `env/<BRANCH_NAME>` branch according your needs. For example, `env/sbx` branch focusing only on IaC or GitOps, 
-`env/dev` branch focusing only on workloads and so on.   
-
-Each `env/<BRANCH_NAME>` branch can perform dedicated platform or workload related tasks. Details on applying changes are as below,
-
-* Platform (`env/sbx`)
-   * Applying changes to the GitHub Actions Workflow
-      - Create a `feature/<BRANCH_NAME>` branch, edit the files under `.github/workflows/` directory.
-      - Once the changes have been made, merge the `feature/<BRANCH_NAME>` branch to `env/<BRANCH_NAME>` branch.
-      - If adding new workflows or renaming existing ones, `main` branch must be updated.
-      - If only changing existing workflows, updating `main` branch immediately is not required.
-      - Run the GitHub workflow manually.
-
-   * Applying changes to the infrastructure using Terraform (IaC)
-      - Create a `feature/<BRANCH_NAME>` branch, edit the files under `terraform/` directory.
-      - You can run `terraform plan` locally if you have terraform installed.
-      - Navigate to the `terraform/` directory, and run `cd env && source local-env.sh` which sets up the environment variables.
-      - Now, run `terraform plan`.
-      - If the plan is successful and the outcome aligns with your objective, merge the branch to `env/<BRANCH_NAME>`.
-      - Run the GitHub Actions workflow manually by selecting the desired `env/<BRANCH_NAME>`.
-      - The above manual workflow trigger step runs `terraform apply` which will cause changes to the infrastructure, 
-      it is advised to take caution.
-
-   * If you want to make changes to the Kubernetes Applications (GitOps)
-      - Create a `feature/<BRANCH_NAME>` branch, edit the files under `gitops/` directory.
-      - [Log in](#section-6a---argo-cd) to Argo CD and switch the "horizon-sdv" application branch to a feature branch in ArgoCD.
-      - Modify files under `gitops/` directory with your desired changes, refresh and sync changes in ArgoCD.
-      - Test the changes. If successful, merge the branch to `env/<BRANCH_NAME>`.
-      - Switch the "horizon-sdv" application branch to the default `env/<BRANCH_NAME>` branch.
-
-* Workloads (`env/dev`)
-   * Making changes to the Workloads
-      - Create a `feature/<BRANCH_NAME>` branch, edit the files under `workloads/` directory.
-      - You can update the workload behavior accordingly.
-      - If the change impacts any of the GitOps applications (example: Jenkins), make sure that this application is ready for 
-      testing and it meets required preconditions.
-      - Merge the branch to `env/<BRANCH_NAME>` and restart the application if required.
-
-#### Create a new branch
-Create a new branch with `main` branch as the base.
-
-1. Run the below command to make sure you are on the `main` branch.   
-   ```
-   git branch
-   ```
-2. If you are not on the main branch, run one of the below command to switch to the `main` branch.
-   ```
-   git checkout main
-   ```   
-   or   
-   ```
-   git switch main
-   ```
-3. Once you are on the `main` branch, run one of the below command to create a new branch and switch to it. 
-Name it as `env/<BRANCH_NAME>`   
-   ```
-   git checkout -b env/<BRANCH_NAME>
-   ```
-   or
-   ```
-   git switch -c env/<BRANCH_NAME>
-   ```
-You can use the above steps to create `feature/<BRANCH_NAME>` branches as well.
-
-### Pushing changes to remote GitHub repository
-Once you have made your edits and saved the configuration files, follow the below steps to push the changes to the 
-remote repository on GitHub.
-
-1. Make sure you have checked-out to the branch of your choice using,
-   ```
-   git checkout -b env/<BRANCH_NAME>
-   ```
-   or
-   ```
-   git switch -c env/<BRANCH_NAME>
-   ```
-2. Run the below command to push the changes,
-   ```
-   git push origin env/<BRANCH_NAME>
-   ```
-You can use the above steps to push changes in `feature/<BRANCH_NAME>` branches to remote repository as well.
-
-
 ## Section #4 - Trigger GitHub Actions Terraform Workflow
+> [!IMPORTANT]
+> Complete the section [Section #5a - Retrieve Certificate's DNS Authz resources](#section-5a---retrieve-certificates-dns-authz-resources) within 30 minutes of certificate creation once terraform workflow has been started. You can perform this step while the Terraform workflow is running. If not, recovery may become more difficult.
+
+> [!NOTE]
+> The Terraform workflow may not appear in the list of workflows in the Actions tab if,
+> 1. The main branch is not present.
+> 2. The main branch is not set as the default branch.
+> 3. The main branch is empty. Make sure your main branch has all the terraform workflow files present.
+
 Follow the below steps to trigger a terraform workflow run.
 
 1. Go to the GitHub repository.
@@ -718,18 +576,9 @@ Follow the below steps to trigger a terraform workflow run.
 
 ## Section #5 - Post Terraform Workflow Setup
 
-### Section #5a - Retrieve Load balancer details
-The steps mentioned in this section is to be performed after the Terraform workflow is completed and the resources on GCP have been provisioned successfully.
-
-1. On the GCP Console, search for "Network Services".
-2. Click on Load balancing and under the LOAD BALANCER TAB, click on the Name of the Load balancer with Protocols set to "HTTPS" as shown in below example   
-   <img src="images/gcp_load_balancer_1.png" width="750" />
-3. Under "Frontend", copy the IP Address details in the table as shown below example    
-   <img src="images/gcp_load_balancer_2.png" width="750" />
-
-### Section #5b - Retrieve Certificate's DNS Authz resources
+### Section #5a - Retrieve Certificate's DNS Authz resources
 > [!IMPORTANT]
-> This step must be completed within 30 minutes of certificate creation. Failure will complicate recovery.
+> It may take a few minutes for the certificate to be created once the Terraform workflow has been started.
 
 In this section, we will be retrieving DNS details required for the DNS setup.   
 
@@ -738,13 +587,29 @@ In this section, we will be retrieving DNS details required for the DNS setup.
 3. Now, scroll down to the bottom of the certificate details page which contains the required details under "Certificate's DNS Authz resources".
 4. From the Certificate's DNS Authz resources details table, copy the values of `DNS Record Name` and `DNS Record Data` as shown in below example.   
    <img src="images/gcp_certificate_dns_authz.png" width="750" />
-5. Share the above Certificate's DNS Authz resources details are required for populating the CNAME record in the DNS Zone.
+5. Share the above Certificate's DNS Authz resources details are required for populating the CNAME record in the DNS Zone.   
+
+Refer [Add DNS Records to your Managed Zone](#add-dns-records-to-your-managed-zone) to create CNAME record.
+
+### Section #5b - Retrieve Load balancer details
+> [!Note]
+> Wait for the Terraform workflow to finish running. The load balancers will be created soon after the Terraform workflow has been completed successfully.
+The steps mentioned in this section is to be performed after the Terraform workflow is completed and the resources on GCP have been provisioned successfully.
+
+1. On the GCP Console, search for "Network Services".
+2. Click on Load balancing and under the LOAD BALANCER TAB, click on the Name of the Load balancer with Protocols set to "HTTPS" as shown in below example   
+   <img src="images/gcp_load_balancer_1.png" width="750" />
+3. Under "Frontend", copy the IP Address details in the table as shown below example    
+   <img src="images/gcp_load_balancer_2.png" width="750" />
+
+Refer [Add DNS Records to your Managed Zone](#add-dns-records-to-your-managed-zone) to create A record.
 
 ### Section #5c - Setup Keycloak
 Follow the steps mentioned in this section once the cluster is provisioned and is running successfully to configure Keycloak.
 
 #### Login as Horizon admin
-1. Keycloak UI can be accessed here: `https://<SUB_DOMAIN>.<HORIZON_DOMAIN>/auth/admin/horizon/console`.
+1. Keycloak UI can be accessed here from the Landing page under 'Admin Applications': `https://<SUB_DOMAIN>.<HORIZON_DOMAIN>`   
+   <img src="images/keycloak_launch.png" width="325" />
 2. Login to Keycloak as admin with below credentials,
    - username: `horizon-admin`
    - password:  Use value of `KEYCLOAK_HORIZON_ADMIN_PASSWORD` as configured in [Add Environment secrets](#add-environment-secrets) section.
@@ -802,11 +667,23 @@ Repeat the above steps to add additional users with the required access privileg
 ## Section #6 - Run Cluster Apps
 This section details how to sign in to and use cluster applications, including their functionalities within the cluster environment.
 
-### Section #6a - Argo CD
+### Section #6a - Horizon Landing Page
+You can access the landing page by going to `https://<SUB_DOMAIN><HORIZON_DOMAIN>` which enables you to launch any of the applications running within the Horizon GKE Cluster.    
+
+There are two types of Apps
+- Applications - Cluster Apps non-admin users can access.
+- Admin Applications - Cluster Apps only the admin users can access and perform cluster administrative tasks.
+
+You can click on the ‘Launch’ button within each cluster application’s card on the Horizon landing page to open the application of your choice.   
+<img src="images/horizon_landing_page.png" width="750" />
+
+### Section #6b - Argo CD
 Argo CD is the GitOps tool being used with GitHub as the "source of truth" where the desired state of Kubernetes applications have been configured. 
 It ensures the Kubernetes Cluster (GKE) always matches that desired state. Here, Argo CD is configured to automatically sync so, no user intervention is usually required.  
 
-To Access Argo CD UI, go to `https://<SUB_DOMAIN>.<HORIZON_DOMAIN>/argocd` and log-in using the credentials configured in section [Add Environment secrets](#add-environment-secrets).   
+1. To Access Argo CD UI, go to the Horizon Landing page here: `https://<SUB_DOMAIN>.<HORIZON_DOMAIN>` and click on the Launch button within the Argo CD app card as below.   
+   <img src="images/argocd_launch.png" width="325" />
+2. Log-in using the credentials configured in section [Add Environment secrets](#add-environment-secrets).   
 
 <details>
   <summary>Click for more details on Argo CD</summary>
@@ -844,41 +721,46 @@ To Access Argo CD UI, go to `https://<SUB_DOMAIN>.<HORIZON_DOMAIN>/argocd` and l
    4. View Application Logs (Potentially): Access logs of application components (depending on setup and integrations).
 </details>   
 
-### Section #6b - Keycloak
+### Section #6c - Keycloak
 Keycloak is the Identity and Access Management (IAM) application provides features like authentication and authorization. It centralizes user management for all applications on the cluster.   
 
-You can access Keycloak for your cluster by going to `https://<SUB_DOMAIN>.<HORIZON_DOMAIN>/auth/admin/horizon/console` and login using the credentials configured in section [Add Environment secrets](#add-environment-secrets).   
+1. To Access Keycloak UI, go to the Horizon Landing page here: https://<SUB_DOMAIN>.<HORIZON_DOMAIN> and click on the Launch button within the Keycloak app card as below.   
+   <img src="images/keycloak_launch.png" width="325" />
+2. Log-in to Keycloak using the credentials configured in section [Add Environment secrets](#add-environment-secrets).
 
 Refer section [Section #5c - Setup Keycloak](#section-5c---setup-keycloak) for steps to create and manage users.   
    
 <img src="images/keycloak_homepage.png" width="750" />
 
-### Section #6c - Gerrit
+### Section #6d - Gerrit
 Gerrit is a web-based code review tool built on top of the git version control system.
 
-Gerrit can be accessed by going to `https://<SUB_DOMAIN>.<HORIZON_DOMAIN>/gerrit` and login using google sign-in.   
-
-<img src="images/horizon_login_with_google.png" width="300" />   
+1. To Access Gerrit, go to the Horizon Landing page here: `https://<SUB_DOMAIN>.<HORIZON_DOMAIN>` and click on the Launch button within the Gerrit app card as below.   
+   <img src="images/gerrit_launch.png" width="325" />
+2. Login using google sign-in.   
+   <img src="images/horizon_login_with_google.png" width="300" />   
 
 Below is a view of Gerrit homepage,   
 <img src="images/gerrit_homepage.png" width="750" />
 
-### Section #6d - Jenkins
+### Section #6e - Jenkins
 Jenkins is an open-source automation server. It's primary use-case is to automate tasks related to running Android workloads on the cluster. It is a core tool for Continuous Integration and Continuous Delivery pipelines.
 
-Jenkins can be accessed by going to `https://<SUB_DOMAIN>.<HORIZON_DOMAIN>/jenkins` and login using google sign-in.
-
-<img src="images/horizon_login_with_google.png" width="300" />   
+1. To Access Jenkins, go to the Horizon Landing page here: `https://<SUB_DOMAIN>.<HORIZON_DOMAIN>` and click on the Launch button within the Jenkins app card as below.   
+   <img src="images/jenkins_launch.png" width="325" />
+2. Login using google sign-in.   
+   <img src="images/horizon_login_with_google.png" width="300" />   
 
 Below is a view of the Jenkins dashboard,   
 <img src="images/jenkins_dashboard.png" width="750" />
 
-### Section #6e - MTK connect
+### Section #6f - MTK connect
 MTK Connect provides connectivity to remote devices for automated and manual testing.   
 
-MTK connect can be accessed by going to `https://<SUB_DOMAIN>.<HORIZON_DOMAIN>/mtk-conect` and login using google sign-in.   
-
-<img src="images/horizon_login_with_google.png" width="300" />    
+1. To Access MTK Connect, go to the Horizon Landing page here: `https://<SUB_DOMAIN>.<HORIZON_DOMAIN>` and click on the Launch button within the MTK Connect app card as below.   
+   <img src="images/mtk-connect_launch.png" width="325" />
+2. Login using google sign-in.   
+   <img src="images/horizon_login_with_google.png" width="300" />    
 
 Below is a view of the MTK connect homepage,   
 <img src="images/mtk-connect_homepage.png" width="750" />
@@ -956,6 +838,115 @@ If you are getting the error "User <USER_NAME> authenticated with Identity provi
 - Log-in to Keycloak and select "Horizon" realm.
 - Go to Users, click on your user.
 - make sure both Username and Email fields have the complete Email address.
+
+### Section #8b - Missing Terraform workflow
+If the "Terraform" workflow is not visible in the Actions tab on your GitHub repository,
+
+- Check if a main branch exists in your repository.
+- Create the `main` branch in your repository if it does not exits using an existing branch as below.
+   - Click on the branch drop down, type the name of the branch as `main` and click Create branch `main` from `env/<BRANCH_NAME>` as below.   
+      <img src="images/github_create_branch.png" width="425" />
+- Update `main` branch as the default branch for your repository.
+   - Go to repository settings and click on the switch icon as below.   
+      <img src="images/github_default_branch_1.png" width="425" />
+   - Select the `main` branch and click on Update as below.   
+      <img src="images/github_default_branch_2.png" width="425" />
+- Go to actions tab, the Terraform workflow should now be visible.
+
+## Appendix
+
+### Branching strategy
+Once you clone the repository to your machine, it may contain a single `main` branch from which you can create new `feature/` and `env/` branches for development purposes.   
+
+* `main`
+* `env/<BRANCH_NAME>`
+* `feature/<BRANCH_NAME>`
+
+From the above list of branches, the `env/<BRANCH_NAME>` can be associated to a project on GCP and have its own environment secrets and variables configured in the GitHub repository.   
+
+For development, you may create new `feature/<BRANCH_NAME>` which can be merged into `env/<BRANCH_NAME>` after code review and passing all tests. 
+You can create multiple `env/<BRANCH_NAME>` branch according your needs. For example, `env/sbx` branch focusing only on IaC or GitOps, 
+`env/dev` branch focusing only on workloads and so on.   
+
+Each `env/<BRANCH_NAME>` branch can perform dedicated platform or workload related tasks. Details on applying changes are as below,
+
+* Platform (`env/sbx`)
+   * Applying changes to the GitHub Actions Workflow
+      - Create a `feature/<BRANCH_NAME>` branch, edit the files under `.github/workflows/` directory.
+      - Once the changes have been made, merge the `feature/<BRANCH_NAME>` branch to `env/<BRANCH_NAME>` branch.
+      - If adding new workflows or renaming existing ones, `main` branch must be updated.
+      - If only changing existing workflows, updating `main` branch immediately is not required.
+      - Run the GitHub workflow manually.
+
+   * Applying changes to the infrastructure using Terraform (IaC)
+      - Create a `feature/<BRANCH_NAME>` branch, edit the files under `terraform/` directory.
+      - You can run `terraform plan` locally if you have terraform installed.
+      - Navigate to the `terraform/` directory, and run `cd env && source local-env.sh` which sets up the environment variables.
+      - Now, run `terraform plan`.
+      - If the plan is successful and the outcome aligns with your objective, merge the branch to `env/<BRANCH_NAME>`.
+      - Run the GitHub Actions workflow manually by selecting the desired `env/<BRANCH_NAME>`.
+      - The above manual workflow trigger step runs `terraform apply` which will cause changes to the infrastructure, 
+      it is advised to take caution.
+
+   * If you want to make changes to the Kubernetes Applications (GitOps)
+      - Create a `feature/<BRANCH_NAME>` branch, edit the files under `gitops/` directory.
+      - [Log in](#section-6a---argo-cd) to Argo CD and switch the "horizon-sdv" application branch to a feature branch in ArgoCD.
+      - Modify files under `gitops/` directory with your desired changes, refresh and sync changes in ArgoCD.
+      - Test the changes. If successful, merge the branch to `env/<BRANCH_NAME>`.
+      - Switch the "horizon-sdv" application branch to the default `env/<BRANCH_NAME>` branch.
+
+* Workloads (`env/dev`)
+   * Making changes to the Workloads
+      - Create a `feature/<BRANCH_NAME>` branch, edit the files under `workloads/` directory.
+      - You can update the workload behavior accordingly.
+      - If the change impacts any of the GitOps applications (example: Jenkins), make sure that this application is ready for 
+      testing and it meets required preconditions.
+      - Merge the branch to `env/<BRANCH_NAME>` and restart the application if required.
+
+### Create a DNS Zone (Optional)
+Follow the steps mentioned in this section only if you do not have DNS Zone setup already or you wish to bring your desired Domain name.
+
+#### Prerequisites
+1. Domain name to be managed.
+2. Enable Cloud DNS API.
+
+#### Create a Managed Zone
+1. On the Google Cloud console, search for Network Services and click on Cloud DNS.
+2. Click on CREATE ZONE.
+3. Set the Zone type to be Public.
+4. Enter a Zone name of your choice. (example: `your-domain.com`) and click on CREATE.
+
+#### Retrieve the Google Cloud DNS Name Servers
+1. In Cloud DNS, click on your Zone name which opens the Zone details.
+2. Under RECORD SETS, look for an entry of Type "NS" and click on it to open details.
+3. Copy all four entries under Routing data which is required for the next step.
+
+#### Update Name Servers at your Domain Registrar
+The steps mentioned in this section may vary based on your Domain name registrar.
+
+1. Log in to your Domain Registrar. (e.g., GoDaddy, Namecheap, Google Domains, etc.)
+2. Find DNS Management or Name Server Settings section for your domain.
+3. Replace the current name servers with the four Google Cloud DNS name servers you noted down in step previous step.
+
+#### Add DNS Records to your Managed Zone
+1. In Cloud DNS, click on your Zone name which opens the Zone details.
+2. Under RECORD SETS, click on ADD STANDARD.
+   * 'A' record:
+      The details for creating `A` record can be populated after the completion of [Section #5b - Retrieve Load balancer details](#section-5b---retrieve-load-balancer-details).
+      1. Enter DNS name, `<SUB_DOMAIN>`  will be added as a prefix to your domain `<HORIZON_DOMAIN>`.
+      2. Set Resource record type to `A`.
+      3. Under IPv4 Address, enter the IP Address of the load balancer.
+      4. You can find the load balancer IP by navigating to Network Services, Load balancing click on the name of the load balancer with Protocol `HTTPS`.
+      5. Copy the IP Address only without the port, under Frontend required by the 'A' record. (point 3)
+      6. After pasting the required IP Address, click on CREATE.
+   * 'CNAME' record:   
+      The details for creating `CNAME` record can be populated after the completion of [Section #5a - Retrieve Certificate's DNS Authz resources](#section-5a---retrieve-certificates-dns-authz-resources).
+      1. Enter the value under `DNS Record Name` for DNS Name.
+      2. Set Resource record type to `CNAME`.
+      3. Enter the value under `DNS Record Data` for Canonical name.
+      4. Click on CREATE.
+
+DNS changes take anywhere from a few minutes to 24-48 hours to propagate across the internet, depends upon the TTL values and DNS caching.
 
 ## LICENSE
 Refer to the [LICENSE](../LICENSE) file for license rights and limitations (Apache 2.0).

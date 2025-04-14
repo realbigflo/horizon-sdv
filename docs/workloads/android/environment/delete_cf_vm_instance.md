@@ -21,6 +21,8 @@ One-time setup requirements.
 
 ## Environment Variables/Parameters <a name="environment-variables"></a>
 
+**Jenkins Parameters:** Defined in the respective pipeline jobs within `gitops/env/stage2/templates/jenkins.yaml` (CasC).
+
 ### `VM_INSTANCE_NAME`
 
 The name of the VM instance to terminate and delete, but it is restricted to those prefixed with `cuttlefish-vm` to avoid accidental termination and removal of other unrelated VMs.

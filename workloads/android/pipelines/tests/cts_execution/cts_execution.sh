@@ -64,35 +64,9 @@ function cts_run() {
         cts_module="--module ${CTS_MODULE}"
     fi
 
-    # Check SHARD and devices match
-    # If devices don't match num_instances aka shards, then retry.
-    num_instances=$(adb devices | grep -c -E '0.+device$')
-    shards="${SHARD_COUNT}"
-    if (( shards != num_instances )); then
-        echo "SHARD_COUNT (${SHARD_COUNT}) != num_instances (${num_instances})"
-
-        if (( num_instances == 0 )); then
-            # Restart adb (adb devices can be unreliable)
-            echo "Restart adb server, sleep 40s"
-            sudo adb kill-server || true
-            sleep 20
-            sudo adb start-server || true
-            sleep 20
-            num_instances=$(adb devices | grep -c -E '0.+device$')
-
-            if (( num_instances == 0 )); then
-                echo "ERROR SHARD_COUNT (${SHARD_COUNT}), num_instances (${num_instances})"
-                exit 1
-            fi
-        elif (( num_instances > shards )); then
-            num_instances=${SHARD_COUNT}
-        fi
-
-        echo "Setting SHARD_COUNT to ${num_instances}"
-        shards=$num_instances
-    else
-        echo "SHARD_COUNT (${SHARD_COUNT}) = num_instances (${num_instances})"
-    fi
+    # Updates shards
+    shards=$(adb devices | grep -c -E '0.+device$')
+    echo "SHARD_COUNT = ${shards}"
 
     # WARNING: cts-tradefed does not work well with quotes. Also keep on single
     #          line to avoid strange behaviour.

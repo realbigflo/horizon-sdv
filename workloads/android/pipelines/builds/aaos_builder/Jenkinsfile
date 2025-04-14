@@ -46,7 +46,7 @@ def kubernetesPodTemplate = """
             command:
             - sleep
             args:
-            - 4h
+            - 5h
             resources:
               limits:
                 cpu: 96000m
@@ -74,75 +74,13 @@ def kubernetesPodTemplate = """
 
 pipeline {
 
-  parameters {
-    string(name: 'AAOS_GERRIT_MANIFEST_URL',
-           defaultValue: "https://${env.HORIZON_DOMAIN}/gerrit/android/platform/manifest",
-           description: "<p>Android Manifest URL.</p>")
-
-    string(name: 'AAOS_REVISION',
-           defaultValue: 'horizon/android-14.0.0_r30',
-           description: '''<p>Android revision tag/branch name.</p>''')
-
-    string(name: 'AAOS_LUNCH_TARGET',
-           defaultValue: '',
-           description: '''<p>Build Android cuttlefish, virtual devices, Pixel and RPi target to build.</p>''')
-
-    choice(name: 'ANDROID_VERSION',
-           choices: ['14', '15'],
-           description: '''<p>Android Version for AVD image builds.<br/>
-           Essential for <b>Android Studio</b> devices <i>sdk_car</i> targets to create the SDK addons and device files</p>''')
-
-    string(name: 'POST_REPO_INITIALISE_COMMAND',
-           defaultValue: '',
-           description: '''<p>Optional additional commands post repo init and prior to repo sync, build/make.<br/>
-           <b>Note: </b>Single command line only, use logical operators to execute subsequent commands.<br/><br/></p>''')
-
-    string(name: 'POST_REPO_SYNC_COMMAND',
-           defaultValue: '',
-           description: '''<p>Optional additional commands post repo sync/fetch and prior to build/make.<br/>
-           <b>Note: </b>Single command line only, use logical operators to execute subsequent commands.<br/><br/></p>''')
-
-    string(name: 'OVERRIDE_MAKE_COMMAND',
-           defaultValue: '',
-           description: '''<p>Optional override default make command.<br/>
-           <b>Note: </b>Single command line only, use logical operators to execute subsequent commands.</p>''')
-
-    choice(name: 'AAOS_CLEAN',
-           choices: ['NO_CLEAN', 'CLEAN_BUILD', 'CLEAN_ALL'],
-           description: '''<p>Clean build or cache directories, e.g.
-           <ul>
-           <li>NO_CLEAN : do not clean</li>
-           <li>CLEAN_BUILD : this will clean the build target output directory</li>
-           <li>CLEAN_ALL : this will clear the whole cache including source</li>
-           </ul>
-           <b>Warning:</b> Only use when necessary.</p>''')
-
-    string(name: 'GERRIT_REPO_SYNC_JOBS',
-           defaultValue: "${env.REPO_SYNC_JOBS}",
-           description: '''<p>Number of parallel sync jobs for <i>repo sync</i>.<br/>
-           Default set to <tt>REPO_SYNC_JOBS</tt> environment variable value.<br/>
-           If undefined (or null), defaults to 1.</p>''')
-
-    choice(name: 'INSTANCE_RETENTION_TIME',
-           choices: ['0', '15', '30', '45', '60'],
-           description: '''<p>Time in minutes to retain the instance after build completion.<br/>
-           Useful for debugging build issues, reviewing target outputs etc.</p>''')
-
-    string(name: 'AAOS_ARTIFACT_STORAGE_SOLUTION', defaultValue: 'GCS_BUCKET',
-           description: '''<p>Android Artifact Storage:<br/>
-           <ul><li>GCS_BUCKET will store to cloud bucket storage</li>
-           <li>Empty will result in nothing stored</li></ul></p>''')
-
-    // Fetch patchset from upstream open review change.
-    string(name: 'GERRIT_PROJECT', defaultValue: '',
-           description: '<p>Optional, define Gerrit Project with open review.</p>')
-    string(name: 'GERRIT_CHANGE_NUMBER', defaultValue: '',
-           description: '<p>Optional, define Gerrit review item change number.</p>')
-    string(name: 'GERRIT_PATCHSET_NUMBER', defaultValue: '',
-           description: '<p>Optional, define Gerrit review item patchset number.</p>')
-  }
+  // Parameters defined in gitops/env/stage2/templates/jenkins.yaml (Jenkins CasC)
 
   agent none
+
+  environment {
+    GERRIT_API_URL="https://${env.HORIZON_DOMAIN}/gerrit"
+  }
 
   stages {
     stage ('Start VM Instance') {
@@ -199,6 +137,7 @@ pipeline {
                     AAOS_REVISION="${AAOS_REVISION}" \
                     AAOS_LUNCH_TARGET="${AAOS_LUNCH_TARGET}" \
                     AAOS_CLEAN="NO_CLEAN" \
+                    GERRIT_SERVER_URL="${GERRIT_API_URL}" \
                     POST_REPO_INITIALISE_COMMAND="${POST_REPO_INITIALISE_COMMAND}" \
                     POST_REPO_SYNC_COMMAND="${POST_REPO_SYNC_COMMAND}" \
                     REPO_SYNC_JOBS="${GERRIT_REPO_SYNC_JOBS}" \
@@ -244,6 +183,7 @@ pipeline {
                 sh '''
                   AAOS_LUNCH_TARGET="${AAOS_LUNCH_TARGET}" \
                   AAOS_REVISION="${AAOS_REVISION}" \
+                  ANDROID_VERSION="${ANDROID_VERSION}" \
                   ./workloads/android/pipelines/builds/aaos_builder/aaos_avd_sdk.sh || true
 
                   AAOS_LUNCH_TARGET="${AAOS_LUNCH_TARGET}" \

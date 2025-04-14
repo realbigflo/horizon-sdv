@@ -42,6 +42,8 @@ One-time setup requirements.
 
 ## Environment Variables/Parameters <a name="environment-variables"></a>
 
+**Jenkins Parameters:** Defined in the respective pipeline jobs within `gitops/env/stage2/templates/jenkins.yaml` (CasC).
+
 ### `ANDROID_CUTTLEFISH_REVISION`
 
 This defines the version of [Android Cuttlefish](https://github.com/google/android-cuttlefish.git) host packages to use, e.g.

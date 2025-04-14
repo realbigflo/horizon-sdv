@@ -40,6 +40,7 @@
 #        repo sync.
 #
 # For Gerrit review change sets:
+#  - GERRIT_SERVER_URL: URL of Gerrit server.
 #  - GERRIT_PROJECT: the name of the project to download.
 #  - GERRIT_CHANGE_NUMBER: the change number of the changeset to download.
 #  - GERRIT_PATCHSET_NUMBER: the patchset number of the changeset to download.
@@ -53,6 +54,7 @@
 # AAOS_GERRIT_MANIFEST_URL=https://dev.horizon-sdv.scpmtk.com/android/platform/manifest \
 # AAOS_REVISION=horizon/android-14.0.0_r30 \
 # AAOS_LUNCH_TARGET=aosp_tangorpro_car-ap1a-userdebug \
+# GERRIT_SERVER_URL=https://dev.horizon-sdv.com/gerrit \
 # GERRIT_CHANGE_NUMBER=82 \
 # GERRIT_PATCHSET_NUMBER=1 \
 # GERRIT_PROJECT=android/platform/packages/services/Car \
@@ -102,7 +104,14 @@ if [[ -n "${GERRIT_PROJECT}" && -n "${GERRIT_CHANGE_NUMBER}" && -n "${GERRIT_PAT
     # Use standard git fetch to retrieve the change.
     # Find the project name from the manifest.
     PROJECT_PATH=$(repo list -p "${GERRIT_PROJECT}")
-    PROJECT_URL=$(echo "${AAOS_GERRIT_MANIFEST_URL}" | cut -d'/' -f1-4)/"${GERRIT_PROJECT}"
+
+    # Derive the Gerrit URL from the manifest URL.
+    #   Horizon SDV uses path based URL whereas Google Android does not.
+    PROJECT_URL=$(echo "${AAOS_GERRIT_MANIFEST_URL}" | cut -d'/' -f1-3)/"${GERRIT_PROJECT}"
+    if ! curl -s -f -o /dev/null "${PROJECT_URL}"; then
+        # Use default.
+        PROJECT_URL="${GERRIT_SERVER_URL}/${GERRIT_PROJECT}"
+    fi
 
     # Extract the last two digits of the change number.
     if (( ${#GERRIT_CHANGE_NUMBER} > 2 )); then

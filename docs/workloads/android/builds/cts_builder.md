@@ -23,12 +23,14 @@ One-time setup requirements.
 
 ## Environment Variables/Parameters <a name="environment-variables"></a>
 
+**Jenkins Parameters:** Defined in the respective pipeline jobs within `gitops/env/stage2/templates/jenkins.yaml` (CasC).
+
 ### `AAOS_GERRIT_MANIFEST_URL`
 
 This provides the URL for the Android repo manifest. Such as:
 
-- https://dev.horizon-sdv.com/gerrit/android/platform/manifest (default)
-- https://android.googlesource.com/platform/manifest
+- https://dev.horizon-sdv.com/gerrit/android/platform/manifest (default Horizon manifest)
+- https://android.googlesource.com/platform/manifest (Google OSS manifest)
 
 ### `AAOS_REVISION`
 
@@ -37,12 +39,11 @@ The Android revision, i.e. branch or tag to build. Tested versions are below:
 - `horizon/android-14.0.0_r30` (ap1a - default)
 - `horizon/android-14.0.0_r74` (ap2a - refer to Known Issues)
 - `horizon/android-15.0.0_r4` (ap3a)
-- `android14-qpr1-automotiveos-release`
-- `android-14.0.0_r22`
+- `horizon/android-15.0.0_r20` (bp1a)
 - `android-14.0.0_r30` (ap1a)
 - `android-14.0.0_r74` (ap2a, refer to Known Issues)
 - `android-15.0.0_r4` (ap3a)
-- `android-15.0.0_r10` (ap4a)
+- `android-15.0.0_r20` (bp1a)
 
 ### `AAOS_LUNCH_TARGET` <a name="targets"></a>
 
@@ -53,16 +54,14 @@ Reference: [Codenames, tags, and build numbers](https://source.android.com/docs/
 Examples:
 
 - Virtual Devices:
-    -   `aosp_cf_x86_64_auto-userdebug`
     -   `aosp_cf_x86_64_auto-ap1a-userdebug`
     -   `aosp_cf_x86_64_auto-ap2a-userdebug`
     -   `aosp_cf_x86_64_auto-ap3a-userdebug`
-    -   `aosp_cf_x86_64_auto-ap4a-userdebug`
-    -   `aosp_cf_arm64_auto-userdebug`
+    -   `aosp_cf_x86_64_auto-bp1a-userdebug`
     -   `aosp_cf_arm64_auto-ap1a-userdebug`
     -   `aosp_cf_arm64_auto-ap2a-userdebug`
     -   `aosp_cf_arm64_auto-ap3a-userdebug`
-    -   `aosp_cf_arm64_auto-ap4a-userdebug`
+    -   `aosp_cf_arm64_auto-bp1a-userdebug`
 
 ### `AAOS_CLEAN`
 
@@ -76,7 +75,7 @@ The minimum is 1 and the maximum is 24.
 
 ### `INSTANCE_RETENTION_TIME`
 
-Keep the build VM instance and container running to allow user to connect to it. Useful for debugging build issues, determining target output archives etc.
+Keep the build VM instance and container running to allow user to connect to it. Useful for debugging build issues, determining target output archives etc. Time in minutes.
 
 Access using `kubectl` e.g. `kubectl exec -it -n jenkins <pod name> -- bash` from `bastion` host.
 
@@ -131,4 +130,4 @@ These are as follows:
 
 ## KNOWN ISSUES <a name="known-issues"></a>
 
-Refer to workloads/android/pipelines/builds/aaos_builder/README.md.
+Refer to `docs/workloads/android/builds/aaos_builder.md` for details.

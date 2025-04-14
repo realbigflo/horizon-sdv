@@ -21,6 +21,7 @@ config:
         artifactNumToKeep: 100
         daysToKeep: 60
         numToKeep: 200
+      repoSyncJobs: 2
 spec:
   destination:
     server: https://kubernetes.default.svc

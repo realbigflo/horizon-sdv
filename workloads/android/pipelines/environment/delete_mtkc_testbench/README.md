@@ -1,0 +1,1 @@
+../../../../../docs/workloads/android/environment/delete_mtkc_testbench.md

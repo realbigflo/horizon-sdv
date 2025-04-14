@@ -21,6 +21,8 @@
 // any such instances left when developing tests.
 pipeline {
 
+  // Parameters defined in gitops/env/stage2/templates/jenkins.yaml (Jenkins CasC)
+
   agent {
     kubernetes {
       yaml """\
@@ -45,13 +47,6 @@ pipeline {
 
   options {
     buildBlocker (useBuildBlocker: true, blockLevel: 'GLOBAL', scanQueueFor: 'ALL', blockingJobs: '.*CF.*Cleanup.*')
-  }
-
-  parameters {
-    string(name: 'VM_INSTANCE_NAME',
-           defaultValue: '',
-           description: '''<p>The name of the instance to delete, e.g.</p>
-           <i>cuttlefish-vm-main-hgie4b</i></p>''')
   }
 
   stages {

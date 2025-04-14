@@ -21,6 +21,8 @@ One-time setup requirements.
 
 ## Environment Variables/Parameters <a name="environment-variables"></a>
 
+**Jenkins Parameters:** Defined in the respective pipeline jobs within `gitops/env/stage2/templates/jenkins.yaml` (CasC).
+
 ### `MTK_CONNECT_TESTBENCH`
 
 The name of the MTK Connect testbench to remove in offline state.

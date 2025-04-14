@@ -33,9 +33,6 @@
  #      - Creates or updates devices associated with the agent.
  #      - Configures device interfaces (e.g., ADB, button, file system,
  #        MJPEG, terminal, touch, and tunnel).
- #      - Axios throws 403 when retrieving devices.
- #        - Retries up to 5 times on errors and random backoff time delay to
- #          workaround the issue.
  #
  #############################################################################
  */
@@ -63,23 +60,9 @@ axios.defaults.auth = {
 };
 
 /**
- * Retries on 403 errors.
- */
-let maxRetries = 5;
-
-/**
  * The agent object that is created or retrieved by the code.
  */
 let agent;
-
-/**
- * Delays for random time between 0 and 2000 milliseconds.
- * Note: This is a crude workaround for AXIOS 403 Forbidden Errors
- */
-async function delayMs(ms) {
-  console.log(`delaying for ${ms}ms`);
-  await new Promise(resolve => setTimeout(resolve, ms));
-}
 
 /**
  * Configures the agent by creating a new one or retrieving an existing one
@@ -127,8 +110,6 @@ async function configureDevice(i) {
   }
 
   console.log(`device ${index} ... `);
-  // Delay randomly to try to avoid AXIOS 403 Forbidden Errors
-  await delayMs(Math.floor(Math.random() * 2000));
 
   const agentResponse = await axios.get('/api/v1/devices', {params: {q: JSON.stringify(q)}})
   if (agentResponse.status === 200 && agentResponse.data.data.length === 1) {
@@ -211,8 +192,6 @@ async function configureDevice(i) {
     }
   }
   await axios.patch(`/api/v1/agents/${agent.id}/devices/${index}`, data);
-  // Reset retry count
-  maxRetries = 5;
 }
 
 async function main()  {
@@ -223,26 +202,8 @@ async function main()  {
     throw err;
   }
 
-  /**
-   * Retry configureDevices up to 5 times on any error.
-   * Note: This is a crude workaround for AXIOS 403 Forbidden Errors
-   */
   console.log(`configureDevices`);
-  while(maxRetries-- > 0) {
-    try {
-      await configureDevices();
-      break;
-    } catch (err) {
-      if (maxRetries > 0) {
-        console.log(`Error: retry configureDevices`);
-        // Delay between 90s and 180s.
-        await delayMs(Math.random() * (180000 - 90000) + 90000);
-        continue;
-      } else {
-        throw err;
-      }
-    }
-  }
+  await configureDevices();
 }
 
 main()

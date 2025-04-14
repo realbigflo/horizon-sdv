@@ -6,6 +6,7 @@
 - [Environment Variables/Parameters](#environment-variables)
 - [Example Usage](#examples)
 - [System Variables](#system-variables)
+- [Known Issues](#known-issues)
 
 ## Introduction <a name="introduction"></a>
 
@@ -25,8 +26,11 @@ One-time setup requirements.
 - Before running this pipeline job, ensure that the following templates have been created by running the corresponding jobs:
   - Docker image template: `Android Workflows/Environment/Docker Image Template`
   - Cuttlefish instance template: `Android Workflows/Environment/CF Instance Template`
+    - Must be rebuilt if using `CUTTLEFISH_INSTALL_WIFI` option, to ensure WiFi APK is stored with the image files.
 
 ## Environment Variables/Parameters <a name="environment-variables"></a>
+
+**Jenkins Parameters:** Defined in the respective pipeline jobs within `gitops/env/stage2/templates/jenkins.yaml` (CasC).
 
 ### `JENKINS_GCE_CLOUD_LABEL`
 
@@ -47,6 +51,10 @@ The URL must point to the bucket where the host packages and virtual devices ima
 - `osp_cf_x86_64_auto-img-builder.zip`
 
 URL is of the form `gs://<ANDROID_BUILD_BUCKET_ROOT_NAME>/Android/Builds/AAOS_Builder/<BUILD_NUMBER>` where `ANDROID_BUILD_BUCKET_ROOT_NAME` is a system environment variable defined in Jenkins CasC `jenkins.yaml` and `BUILD_NUMBER` is the Jenkins build number.
+
+### `CUTTLEFISH_INSTALL_WIFI`
+
+This allows the user to install Wifi utility APK on all Cuttlefish virtual devices.
 
 ### `CUTTLEFISH_MAX_BOOT_TIME`
 
@@ -116,7 +124,7 @@ Once you have access to the instance, follow these steps:
 
 ```
 CUTTLEFISH_DOWNLOAD_URL="gs://sdva-2108202401-aaos/Android/Builds/AAOS_Builder/10/" \
-CUTTLEFISH_MAX_BOOT_TIME=300 \
+CUTTLEFISH_MAX_BOOT_TIME=180 \
 NUM_INSTANCES=1 \
 VM_CPUS=16 \
 VM_MEMORY_MB="16384" \
@@ -191,3 +199,12 @@ These are as follows:
 
 -   `JENKINS_SERVICE_ACCOUNT`
     - Service account to use for pipelines. Required to ensure correct roles and permissions for GCP resources.
+
+## KNOWN ISSUES <a name="known-issues"></a>
+
+### Cuttlefish Virtual Devices not booting:
+
+-   The CVD launcher will exit if it cannot boot the desired number of devices. Due to existing issues with CVD's device creation and booting process, it is safer to terminate and report failure rather than attempting to recover with fewer devices, as this may cause connectivity problems with some of the remaining devices.
+     - Future plans include implementing mitigation strategies to ensure that devices that boot with fewer than the requested number can be trusted and utilized. Currently, these devices cannot be relied upon to function correctly.
+-    WiFi: Some versions of Android, e.g. `android-14.0.0_r30` are not so reliable when it comes to connecting WiFi to the network. If the device cannot connect to the network, it is not possible to test WiFi connectivity. In future releases we will remove devices that fail to connect from the test.
+     - Known reliable version: `android-14.0.0_r74`

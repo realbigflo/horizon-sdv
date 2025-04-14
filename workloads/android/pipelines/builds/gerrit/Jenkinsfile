@@ -45,7 +45,7 @@ def kubernetesPodTemplate = """
       command:
       - sleep
       args:
-      - 4h
+      - 8h
       resources:
         limits:
           cpu: 96000m
@@ -73,11 +73,9 @@ def kubernetesPodTemplate = """
 
 pipeline {
 
-  agent none
+  // Trigger defined in gitops/env/stage2/templates/jenkins.yaml (Jenkins CasC)
 
-  triggers {
-    gerrit customUrl: '', gerritProjects: [[branches: [[compareType: 'ANT', pattern: '**/horizon/*']], compareType: 'REG_EXP', disableStrictForbiddenFileVerification: false, pattern: '^android\\/(?!.*\\/manifest).*$']], serverName: 'Gerrit', triggerOnEvents: [patchsetCreated()]
-  }
+  agent none
 
   environment {
     // Ensure Gerrit Code Review knows the new Gerrit path.
@@ -103,9 +101,11 @@ pipeline {
                   if ( "${env.GERRIT_BRANCH}" =~ "android-14.0.0_r74" ) env.ANDROID_BUILD_ID="ap2a-"
                   if ( "${env.GERRIT_BRANCH}" =~ "android-15.0.0_r4" )  env.ANDROID_BUILD_ID="ap3a-"
                   if ( "${env.GERRIT_BRANCH}" =~ "android-15.0.0_r10" ) env.ANDROID_BUILD_ID="ap4a-"
+                  if ( "${env.GERRIT_BRANCH}" =~ "android-15.0.0_r20" ) env.ANDROID_BUILD_ID="bp1a-"
 
                   if ( "$ANDROID_BUILD_ID" =~ "ap3a" ) env.ANDROID_VERSION=15
                   if ( "$ANDROID_BUILD_ID" =~ "ap4a" ) env.ANDROID_VERSION=15
+                  if ( "$ANDROID_BUILD_ID" =~ "bp1a" ) env.ANDROID_VERSION=15
                 }
                 sh '''
                   set +x
@@ -135,7 +135,9 @@ pipeline {
                   export AAOS_ARTIFACT_ROOT_NAME="${ANDROID_BUILD_BUCKET_ROOT_NAME}"
                   export CLOUD_REGION="${CLOUD_REGION}"
                   export AAOS_BUILD_NUMBER=${BUILD_NUMBER}/${AAOS_LUNCH_TARGET}
+                  export ANDROID_VERSION="${ANDROID_VERSION}"
                   export AAOS_CLEAN="NO_CLEAN"
+                  export GERRIT_SERVER_URL="${GERRIT_API_URL}"
                   ./workloads/android/pipelines/builds/aaos_builder/aaos_initialise.sh
                   ./workloads/android/pipelines/builds/aaos_builder/aaos_build.sh
                   ./workloads/android/pipelines/builds/aaos_builder/aaos_avd_sdk.sh || true
@@ -159,7 +161,9 @@ pipeline {
                   export AAOS_ARTIFACT_ROOT_NAME="${ANDROID_BUILD_BUCKET_ROOT_NAME}"
                   export CLOUD_REGION="${CLOUD_REGION}"
                   export AAOS_BUILD_NUMBER=${BUILD_NUMBER}/${AAOS_LUNCH_TARGET}
+                  export ANDROID_VERSION="${ANDROID_VERSION}"
                   export AAOS_CLEAN="NO_CLEAN"
+                  export GERRIT_SERVER_URL="${GERRIT_API_URL}"
                   ./workloads/android/pipelines/builds/aaos_builder/aaos_initialise.sh
                   ./workloads/android/pipelines/builds/aaos_builder/aaos_build.sh
                   ./workloads/android/pipelines/builds/aaos_builder/aaos_avd_sdk.sh || true
@@ -184,6 +188,7 @@ pipeline {
                   export CLOUD_REGION="${CLOUD_REGION}"
                   export AAOS_BUILD_NUMBER=${BUILD_NUMBER}/${AAOS_LUNCH_TARGET}
                   export AAOS_CLEAN="NO_CLEAN"
+                  export GERRIT_SERVER_URL="${GERRIT_API_URL}"
                   ./workloads/android/pipelines/builds/aaos_builder/aaos_initialise.sh
                   ./workloads/android/pipelines/builds/aaos_builder/aaos_build.sh
                   ./workloads/android/pipelines/builds/aaos_builder/aaos_storage.sh
@@ -207,6 +212,7 @@ pipeline {
                   export CLOUD_REGION="${CLOUD_REGION}"
                   export AAOS_BUILD_NUMBER=${BUILD_NUMBER}/${AAOS_LUNCH_TARGET}
                   export AAOS_CLEAN="NO_CLEAN"
+                  export GERRIT_SERVER_URL="${GERRIT_API_URL}"
                   ./workloads/android/pipelines/builds/aaos_builder/aaos_initialise.sh
                   ./workloads/android/pipelines/builds/aaos_builder/aaos_build.sh
                   ./workloads/android/pipelines/builds/aaos_builder/aaos_storage.sh
