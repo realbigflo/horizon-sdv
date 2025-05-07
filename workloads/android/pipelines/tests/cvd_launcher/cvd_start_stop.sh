@@ -128,7 +128,7 @@ function cuttlefish_install_wifi() {
             else
                 echo "${device}: Successfully connected to wifi" | tee -a "${wifilogfile}"
             fi
-
+            adb -s "${device}" shell setprop debug.pinghost "some_var"
             echo "WiFi status on ${device}"
             echo "================================================="
             adb -s "${device}" shell su root dumpsys wifi | grep "current SSID"
